@@ -121,7 +121,7 @@ const RoomsInfo = () => {
     queryFn: async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000))
       const res = await apiClient.activity.getRoomsInfo()
-      const data = res.$serialized
+      const data = res
       const result = [] as {
         path: string
         title: string

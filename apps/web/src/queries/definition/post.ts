@@ -30,7 +30,7 @@ export const post = {
           prefer: 'lexical',
         })
 
-        return data.$serialized as PostWithTranslation
+        return data as PostWithTranslation
       },
     }),
 }

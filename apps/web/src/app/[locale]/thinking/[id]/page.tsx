@@ -45,7 +45,7 @@ export default async function Page(props: {
             返回
           </Link>
         </MotionButtonBase>
-        <ThinkingItem item={data.$serialized} />
+        <ThinkingItem item={data} />
 
         {data.allowComment && (
           <Suspense>

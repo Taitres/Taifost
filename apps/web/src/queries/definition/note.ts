@@ -14,7 +14,7 @@ export const note = {
         const [, id, lang] = queryKey as [string, string, string | undefined]
 
         if (id === LATEST_KEY) {
-          return (await apiClient.note.getLatest()).$serialized
+          return await apiClient.note.getLatest()
         }
         const data = await apiClient.note.getNoteByNid(Number(id), {
           password: password || undefined,
@@ -22,7 +22,7 @@ export const note = {
           prefer: 'lexical',
         })
 
-        return data.$serialized as NoteWrappedWithLikedAndTranslationPayload
+        return data as NoteWrappedWithLikedAndTranslationPayload
       },
     }),
 }

@@ -13,5 +13,5 @@ export const getData = cache(async (slug: string) => {
   const data = await apiClient.page
     .getBySlug(slug, { prefer: 'lexical' })
     .catch(requestErrorHandler)
-  return data.$serialized
+  return data
 })

@@ -15,7 +15,7 @@ export function useCommentsQuery(refId: string) {
         page,
       })
 
-      return data.$serialized
+      return data
     },
 
     meta: {

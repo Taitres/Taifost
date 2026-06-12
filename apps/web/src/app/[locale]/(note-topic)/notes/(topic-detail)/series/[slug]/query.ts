@@ -6,6 +6,6 @@ export const getTopicQuery = (topicSlug: string) =>
     queryKey: ['topic', topicSlug],
     queryFn: async ({ queryKey }) => {
       const [_, slug] = queryKey
-      return (await apiClient.topic.getTopicBySlug(slug)).$serialized
+      return apiClient.topic.getTopicBySlug(slug)
     },
   })

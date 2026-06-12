@@ -14,7 +14,7 @@ export const page = {
           prefer: 'lexical',
         })
 
-        return data.$serialized
+        return data
       },
     }),
 }

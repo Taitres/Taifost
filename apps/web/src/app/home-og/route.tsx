@@ -27,7 +27,7 @@ export const GET = async () => {
     seo,
     user: { avatar },
     theme,
-  } = aggregateData.$serialized
+  } = aggregateData
   const ogAvatar =
     (theme as AppThemeConfig | undefined)?.config.module?.og?.avatar || avatar
 

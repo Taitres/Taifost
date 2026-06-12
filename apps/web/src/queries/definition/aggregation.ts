@@ -12,7 +12,7 @@ export const aggregation = {
       queryFn: async () =>
         apiClient.aggregate.getAggregateData('shiro').then(
           (res) =>
-            res.$serialized as AggregateRoot & {
+            res as AggregateRoot & {
               theme: AppThemeConfig
             },
         ),

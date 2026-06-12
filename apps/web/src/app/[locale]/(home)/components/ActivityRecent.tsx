@@ -17,8 +17,7 @@ export const ActivityRecent = () => {
   const t = useTranslations('home')
   const { data, isLoading } = useQuery({
     queryKey: ['home-activity-recent'],
-    queryFn: async () =>
-      (await apiClient.activity.getRecentActivities()).$serialized,
+    queryFn: async () => apiClient.activity.getRecentActivities(),
     refetchOnMount: true,
     meta: {
       persist: true,

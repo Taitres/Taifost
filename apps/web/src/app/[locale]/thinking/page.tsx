@@ -73,7 +73,7 @@ const PostBox = () => {
             >
           >(QUERY_KEY, (old) =>
             produce(old, (draft) => {
-              draft?.pages[0].unshift(res.$serialized as any)
+              draft?.pages[0].unshift(res as any)
               return draft
             }),
           )
