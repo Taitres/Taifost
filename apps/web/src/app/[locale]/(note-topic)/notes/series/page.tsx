@@ -21,7 +21,7 @@ export default definePrerenderPage()<TopicModel[]>({
       <main className="mt-10 text-zinc-950/80 dark:text-zinc-50/80">
         <TimelineList>
           {data.map((item: TopicModel, i: number) => {
-            const date = new Date(item.createdAt)
+            const date = new Date(item.created)
 
             return (
               <BottomToUpTransitionView

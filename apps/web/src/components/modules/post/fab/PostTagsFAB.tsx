@@ -108,38 +108,46 @@ export const TagDetailModal = (props: { name: string }) => {
     <TimelineList>
       {data
         .sort(
-          (a: PostModel, b: PostModel) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          (a: { created: string }, b: { created: string }) =>
+            new Date(b.created).getTime() - new Date(a.created).getTime(),
         )
-        .map((item: PostModel) => (
-          <li
-            key={item.id}
-            className="flex items-center justify-between"
-            data-id={item.id}
-          >
-            <span className="flex min-w-0 shrink items-center">
-              <span className="mr-2 inline-block tabular-nums">
-                {Intl.DateTimeFormat('en-us', {
-                  month: '2-digit',
-                  day: '2-digit',
-                  year: '2-digit',
-                }).format(new Date(item.created))}
+        .map(
+          (item: {
+            id: string
+            created: string
+            title: string
+            slug: string
+            category: { slug: string }
+          }) => (
+            <li
+              key={item.id}
+              className="flex items-center justify-between"
+              data-id={item.id}
+            >
+              <span className="flex min-w-0 shrink items-center">
+                <span className="mr-2 inline-block tabular-nums">
+                  {Intl.DateTimeFormat('en-us', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    year: '2-digit',
+                  }).format(new Date(item.created))}
+                </span>
+                <Link
+                  onClick={() => {
+                    dismissAll()
+                  }}
+                  href={routeBuilder(Routes.Post, {
+                    category: item.category.slug,
+                    slug: item.slug,
+                  })}
+                  className="min-w-0 truncate leading-6"
+                >
+                  <span className="min-w-0 truncate">{item.title}</span>
+                </Link>
               </span>
-              <Link
-                onClick={() => {
-                  dismissAll()
-                }}
-                href={routeBuilder(Routes.Post, {
-                  category: item.category.slug,
-                  slug: item.slug,
-                })}
-                className="min-w-0 truncate leading-6"
-              >
-                <span className="min-w-0 truncate">{item.title}</span>
-              </Link>
-            </span>
-          </li>
-        ))}
+            </li>
+          ),
+        )}
     </TimelineList>
   )
 }

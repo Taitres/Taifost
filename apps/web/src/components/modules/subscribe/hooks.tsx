@@ -9,7 +9,13 @@ import { SubscribeModal } from './SubscribeModal'
 const QUERY_CHECK_SUBSCRIBE_KEY = ['subscribe-status']
 
 export const useSubscribeStatusQuery = () =>
-  useQuery({
+  useQuery<
+    Awaited<ReturnType<typeof apiClient.subscribe.check>> extends infer R
+      ? R extends { enable: boolean }
+        ? R
+        : never
+      : never
+  >({
     queryKey: QUERY_CHECK_SUBSCRIBE_KEY,
     queryFn: apiClient.subscribe.check,
     gcTime: 60_000 * 10,

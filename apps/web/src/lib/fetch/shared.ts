@@ -1,32 +1,46 @@
 import {
   allControllers,
-  createLegacyApiClient,
+  createClient,
   type IRequestAdapter,
-} from '@mx-space/api-client/legacy'
+} from '@mx-space/api-client'
 import type { $fetch } from 'ofetch'
 
 import { API_URL } from '~/constants/env'
 
 type FetchType = typeof $fetch
 
-interface AdapterOptions {
-  params?: Record<string, any> | URLSearchParams
+interface RequestOptions {
+  method?: string
   data?: Record<string, any>
+  params?: Record<string, any> | URLSearchParams
+  headers?: Record<string, string>
+  transformResponse?: false | (<T = any>(data: any) => T)
+  next?: any
+  cache?:
+    | 'default'
+    | 'force-cache'
+    | 'no-cache'
+    | 'no-store'
+    | 'only-if-cached'
+    | 'reload'
   [key: string]: any
 }
+
+type GetDeleteOptions = Omit<RequestOptions, 'data'>
+type WriteOptions = Partial<RequestOptions>
 
 export const createFetchAdapter = (
   $fetch: FetchType,
 ): IRequestAdapter<typeof $fetch> => ({
   default: $fetch,
-  get(url: string, options: AdapterOptions) {
+  get(url: string, options?: GetDeleteOptions) {
     const { params } = options || {}
     return $fetch(url, {
       method: 'GET',
       query: params,
     })
   },
-  post(url: string, options: AdapterOptions) {
+  post(url: string, options?: WriteOptions) {
     const { params, data } = options || {}
     return $fetch(url, {
       method: 'post',
@@ -34,7 +48,7 @@ export const createFetchAdapter = (
       body: data,
     })
   },
-  put(url: string, options: AdapterOptions) {
+  put(url: string, options?: WriteOptions) {
     const { params, data } = options || {}
     return $fetch(url, {
       method: 'put',
@@ -42,7 +56,7 @@ export const createFetchAdapter = (
       body: data,
     })
   },
-  patch(url: string, options: AdapterOptions) {
+  patch(url: string, options?: WriteOptions) {
     const { params, data } = options || {}
     return $fetch(url, {
       method: 'patch',
@@ -50,7 +64,7 @@ export const createFetchAdapter = (
       body: data,
     })
   },
-  delete(url: string, options: AdapterOptions) {
+  delete(url: string, options?: GetDeleteOptions) {
     const { params, data } = options || {}
     return $fetch(url, {
       method: 'delete',
@@ -75,15 +89,56 @@ export const createFetchAdapter = (
  *     aliases.
  *
  * Rather than rewriting every query / loader / server-render helper, we
- * install the shared `legacyResponseAdapter` (from `@mx-space/api-client/legacy`)
- * which performs the V2↔V3 shape translation in one place. The adapter
- * unwraps the v3 envelope, flattens `meta.translation` / `meta.interaction`
- * / `meta.insights` into each item, remaps pagination fields, and rewrites
- * legacy `sortBy` aliases.
+ * install a `transformResponse` hook that performs the V2↔V3 envelope
+ * unwrap + pagination field remap in one place. This mirrors the behavior
+ * of `legacyResponseAdapter` from `@mx-space/api-client/legacy`, but does
+ * not require the `/legacy` subpath export (which is only available on
+ * newer api-client versions).
  */
+
+const remapPagination = (pg: any) => {
+  if (!pg || typeof pg !== 'object') return pg
+  const currentPage = pg.currentPage ?? pg.page
+  const totalPage = pg.totalPage ?? pg.totalPages
+  const { total } = pg
+  const { size } = pg
+  const out: Record<string, unknown> = {
+    currentPage,
+    totalPage,
+    total,
+    size,
+    hasNextPage:
+      pg.hasNextPage ??
+      (typeof currentPage === 'number' && typeof totalPage === 'number'
+        ? currentPage < totalPage
+        : undefined),
+    hasPrevPage:
+      pg.hasPrevPage ??
+      (typeof currentPage === 'number' ? currentPage > 1 : undefined),
+  }
+  for (const k of Object.keys(out)) if (out[k] === undefined) delete out[k]
+  return out
+}
+
+const isPaginateLike = (
+  v: unknown,
+): v is { data: unknown[]; pagination?: any } =>
+  !!v && typeof v === 'object' && Array.isArray((v as any).data)
+
+const legacyTransformResponse = <T = any>(data: any): T => {
+  if (isPaginateLike(data)) {
+    return {
+      ...data,
+      pagination: remapPagination(data.pagination),
+    } as T
+  }
+  return data as T
+}
+
 export const createApiClient = (
   fetchAdapter: ReturnType<typeof createFetchAdapter>,
 ) =>
-  createLegacyApiClient(fetchAdapter)(API_URL, {
+  createClient(fetchAdapter)(API_URL, {
     controllers: allControllers,
+    transformResponse: legacyTransformResponse,
   })
