@@ -105,7 +105,7 @@ export default function TimelinePage() {
           type: nextType,
           year: +(year || 0) || undefined,
         })
-        .then((res) => res.data)
+        .then((res: { data: TimelineData }) => res.data)
     },
   })
 

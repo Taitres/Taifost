@@ -136,7 +136,9 @@ export const SubscribeModal: FC<SubscribeModalProps> = ({
       />
       <div className="mb-2 flex gap-10">
         {Object.keys(state.types)
-          .filter((type) => query.data?.allowTypes.includes(type as any))
+          .filter((type) =>
+            (query.data?.allowTypes as string[] | undefined)?.includes(type),
+          )
           .map((name) => (
             <fieldset
               className="children:cursor-pointer inline-flex items-center text-sm"

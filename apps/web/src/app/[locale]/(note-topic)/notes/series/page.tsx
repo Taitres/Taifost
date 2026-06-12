@@ -1,3 +1,5 @@
+import type { TopicModel } from '@mx-space/api-client'
+
 import { TimelineList } from '~/components/ui/list/TimelineList'
 import {
   BottomToUpSoftScaleTransitionView,
@@ -8,7 +10,7 @@ import { apiClient } from '~/lib/request'
 import { definePrerenderPage } from '~/lib/request.server'
 import { routeBuilder, Routes } from '~/lib/route-builder'
 
-export default definePrerenderPage()({
+export default definePrerenderPage()<TopicModel[]>({
   fetcher: async () => (await apiClient.topic.getAll()).data,
   Component: ({ data }) => (
     <BottomToUpSoftScaleTransitionView>
@@ -18,8 +20,8 @@ export default definePrerenderPage()({
 
       <main className="mt-10 text-zinc-950/80 dark:text-zinc-50/80">
         <TimelineList>
-          {data.map((item, i) => {
-            const date = new Date(item.created)
+          {data.map((item: TopicModel, i: number) => {
+            const date = new Date(item.createdAt)
 
             return (
               <BottomToUpTransitionView

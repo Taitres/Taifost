@@ -8,18 +8,25 @@ import type { $fetch } from 'ofetch'
 import { API_URL } from '~/constants/env'
 
 type FetchType = typeof $fetch
+
+interface AdapterOptions {
+  params?: Record<string, any> | URLSearchParams
+  data?: Record<string, any>
+  [key: string]: any
+}
+
 export const createFetchAdapter = (
   $fetch: FetchType,
 ): IRequestAdapter<typeof $fetch> => ({
   default: $fetch,
-  get(url: string, options) {
+  get(url: string, options: AdapterOptions) {
     const { params } = options || {}
     return $fetch(url, {
       method: 'GET',
       query: params,
     })
   },
-  post(url: string, options) {
+  post(url: string, options: AdapterOptions) {
     const { params, data } = options || {}
     return $fetch(url, {
       method: 'post',
@@ -27,7 +34,7 @@ export const createFetchAdapter = (
       body: data,
     })
   },
-  put(url: string, options) {
+  put(url: string, options: AdapterOptions) {
     const { params, data } = options || {}
     return $fetch(url, {
       method: 'put',
@@ -35,7 +42,7 @@ export const createFetchAdapter = (
       body: data,
     })
   },
-  patch(url: string, options) {
+  patch(url: string, options: AdapterOptions) {
     const { params, data } = options || {}
     return $fetch(url, {
       method: 'patch',
@@ -43,7 +50,7 @@ export const createFetchAdapter = (
       body: data,
     })
   },
-  delete(url: string, options) {
+  delete(url: string, options: AdapterOptions) {
     const { params, data } = options || {}
     return $fetch(url, {
       method: 'delete',

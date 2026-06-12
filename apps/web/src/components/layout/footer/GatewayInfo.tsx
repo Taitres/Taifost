@@ -1,5 +1,10 @@
 'use client'
 
+import type {
+  RoomOmittedNote,
+  RoomOmittedPage,
+  RoomOmittedPost,
+} from '@mx-space/api-client'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 
@@ -128,7 +133,7 @@ const RoomsInfo = () => {
         count: number
       }[]
       const morphArticleIdToRoomName = (id: string) => `article_${id}`
-      data.objects.notes.forEach((note) => {
+      data.objects.notes.forEach((note: RoomOmittedNote) => {
         result.push({
           path: routeBuilder(Routes.Note, {
             id: note.nid,
@@ -137,7 +142,7 @@ const RoomsInfo = () => {
           count: data.roomCount[morphArticleIdToRoomName(note.id)],
         })
       })
-      data.objects.posts.forEach((post) => {
+      data.objects.posts.forEach((post: RoomOmittedPost) => {
         result.push({
           path: routeBuilder(Routes.Post, {
             category: post.category.slug,
@@ -147,7 +152,7 @@ const RoomsInfo = () => {
           count: data.roomCount[morphArticleIdToRoomName(post.id)],
         })
       })
-      data.objects.pages.forEach((page) => {
+      data.objects.pages.forEach((page: RoomOmittedPage) => {
         result.push({
           path: routeBuilder(Routes.Page, {
             slug: page.slug,

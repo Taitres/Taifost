@@ -195,7 +195,7 @@ export const useSendComment = () => {
           .post<CommentModel>({
             data: { text, source, ...(anchor ? { anchor } : {}) },
           })
-          .then(async (res) => {
+          .then(async (res: CommentModel) => {
             if (syncToRecently)
               apiClient.recently.proxy
                 .post({

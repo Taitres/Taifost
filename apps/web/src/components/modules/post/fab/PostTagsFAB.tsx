@@ -64,7 +64,7 @@ const TagsModal = () => {
   if (!data) return <EmptyIcon />
   return (
     <div className="flex flex-wrap gap-3">
-      {data.map((tag) => (
+      {data.map((tag: TagModel) => (
         <TagInternal key={tag.name} {...tag} onClick={handleTagClick} />
       ))}
     </div>
@@ -108,10 +108,10 @@ export const TagDetailModal = (props: { name: string }) => {
     <TimelineList>
       {data
         .sort(
-          (a, b) =>
-            new Date(b.created).getTime() - new Date(a.created).getTime(),
+          (a: PostModel, b: PostModel) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         )
-        .map((item) => (
+        .map((item: PostModel) => (
           <li
             key={item.id}
             className="flex items-center justify-between"

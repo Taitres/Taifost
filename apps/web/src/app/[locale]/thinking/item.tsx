@@ -43,7 +43,7 @@ export const ThinkingItem: FC<{
   const handleUp = (id: string) => {
     apiClient.recently
       .attitude(id, RecentlyAttitudeEnum.Up)
-      .then(({ code }) => {
+      .then(({ code }: { code: RecentlyAttitudeResultEnum }) => {
         if (code === RecentlyAttitudeResultEnum.Inc) {
           toast.success(sample(['(￣▽￣*) ゞ', '(＾▽＾)']))
         } else {
@@ -55,7 +55,7 @@ export const ThinkingItem: FC<{
   const handleDown = (id: string) => {
     apiClient.recently
       .attitude(id, RecentlyAttitudeEnum.Down)
-      .then(({ code }) => {
+      .then(({ code }: { code: RecentlyAttitudeResultEnum }) => {
         if (code === RecentlyAttitudeResultEnum.Inc) {
           toast.success('(╥_╥)')
         } else {

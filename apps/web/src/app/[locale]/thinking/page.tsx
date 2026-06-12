@@ -61,8 +61,8 @@ const PostBox = () => {
   const { mutateAsync: handleSend, isPending } = useMutation({
     mutationFn: async () => {
       apiClient.shorthand.proxy
-        .post({ data: { content: value } })
-        .then((res) => {
+        .post<RecentlyModel>({ data: { content: value } })
+        .then((res: RecentlyModel) => {
           setValue('')
 
           queryClient.setQueryData<
@@ -73,7 +73,7 @@ const PostBox = () => {
             >
           >(QUERY_KEY, (old) =>
             produce(old, (draft) => {
-              draft?.pages[0].unshift(res as any)
+              draft?.pages[0].unshift(res)
               return draft
             }),
           )
@@ -164,7 +164,9 @@ const List = () => {
   return (
     <ul ref={scope}>
       {data?.pages.map((page) =>
-        page.map((item) => <ThinkingItem item={item} key={item.id} />),
+        page.map((item: RecentlyModel) => (
+          <ThinkingItem item={item} key={item.id} />
+        )),
       )}
 
       {hasNext && (

@@ -371,11 +371,11 @@ const FormModal = () => {
           dismissTop()
           toast.success(t('submit_success'))
         })
-        .catch((err) => {
+        .catch((err: unknown) => {
           if (err instanceof RequestError)
             toast.error(getErrorMessageFromRequestError(err))
           else {
-            toast.error(err.message)
+            toast.error((err as Error).message)
           }
         })
     },

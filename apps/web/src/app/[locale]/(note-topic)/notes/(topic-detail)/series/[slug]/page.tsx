@@ -68,7 +68,7 @@ export default function Page() {
       <main className="mt-10 text-zinc-950/80 dark:text-zinc-50/80">
         <TimelineList>
           {notes?.pages.map((page) =>
-            page.data.map((child, i) => {
+            page.data.map((child: NoteTopicListItem, i: number) => {
               const date = new Date(child.created)
 
               return (

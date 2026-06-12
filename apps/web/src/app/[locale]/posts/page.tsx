@@ -1,5 +1,6 @@
 import '~/components/modules/post/PostItem'
 
+import type { PaginateResult, PostModel } from '@mx-space/api-client'
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 
@@ -41,7 +42,7 @@ export const generateMetadata = async (
   }
 }
 
-export default definePrerenderPage<Props>()({
+export default definePrerenderPage<Props>()<PaginateResult<PostModel>>({
   fetcher: async (params) => {
     const { page, size, orderBy, sortBy, lang, locale } = params || {}
     const currentPage = page ? Number.parseInt(page) : 1

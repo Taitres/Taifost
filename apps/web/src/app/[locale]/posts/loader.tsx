@@ -2,7 +2,7 @@
 
 import '~/components/modules/post'
 
-import type { Pager } from '@mx-space/api-client'
+import type { Pager, PostModel } from '@mx-space/api-client'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'next/navigation'
 import { useLocale } from 'next-intl'
@@ -58,7 +58,7 @@ export const PostLoadMore: FC<{ pagination: Pager }> = ({ pagination }) => {
     <>
       <ul>
         {data.pages.map((page) =>
-          page.data.map((item, index) => (
+          page.data.map((item: PostModel, index: number) => (
             <PostItemComposer key={item.id} data={item} index={index} />
           )),
         )}

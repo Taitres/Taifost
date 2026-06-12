@@ -74,7 +74,7 @@ const NoteTimelineImpl = () => {
   return (
     <AnimatePresence>
       <m.ul className="space-y-1 [&_i]:hover:text-accent" animate={animateUl}>
-        {(timelineData || initialData)?.map((item) => {
+        {(timelineData || initialData)?.map((item: NoteTimelineItemData) => {
           const isCurrent = item.nid === Number.parseInt(noteNid || '0')
           return (
             <NoteTimelineItem

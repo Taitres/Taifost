@@ -43,7 +43,7 @@ export default definePrerenderPage<{
             type: nextType,
             year: +(year || 0) || undefined,
           })
-          .then((res) => res.data),
+          .then((res: { data: unknown }) => res.data),
     })
   },
   Component: async (props: PropsWithChildren) => {

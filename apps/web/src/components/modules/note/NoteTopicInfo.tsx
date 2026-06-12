@@ -68,7 +68,9 @@ const NoteTopicRank: FC<{
   const filteredNotes = useMemo(() => {
     if (!topicNotes) return null
     const { data: notes } = topicNotes
-    return notes.filter((item) => item.id !== noteId).slice(0, 5)
+    return notes
+      .filter((item: NoteTopicListItem) => item.id !== noteId)
+      .slice(0, 5)
   }, [noteId, topicNotes])
 
   return (
@@ -81,7 +83,7 @@ const NoteTopicRank: FC<{
           </p>
 
           <ul className="space-y-1 opacity-80">
-            {filteredNotes.map((item) => (
+            {filteredNotes.map((item: NoteTopicListItem) => (
               <NoteTimelineItem
                 active={false}
                 title={item.title}

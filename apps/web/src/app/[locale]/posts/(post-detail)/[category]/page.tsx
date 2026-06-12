@@ -6,7 +6,7 @@ import { definePrerenderPage } from '~/lib/request.server'
 export default definePrerenderPage<{
   category: string
   locale: Locale
-}>()({
+}>()<{ path: string }>({
   fetcher({ category }) {
     return apiClient.post.getFullUrl(category)
   },

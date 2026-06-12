@@ -21,7 +21,7 @@ export const useAuthProviders = () => {
         .get<{
           data: AuthSocialProviders[]
         }>()
-        .then((res) => res.data),
+        .then((res: { data: AuthSocialProviders[] }) => res.data),
     refetchOnMount: 'always',
     meta: {
       persist: true,
@@ -57,7 +57,7 @@ export const AuthProvidersRender: FC = () => {
     <>
       {providers && (
         <ul className="flex items-center justify-center gap-3">
-          {providers.map((provider) => (
+          {providers.map((provider: AuthSocialProviders) => (
             <li key={provider}>
               <MotionButtonBase
                 disabled={authProcessingLockSet.has(provider)}

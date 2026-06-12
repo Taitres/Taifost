@@ -86,7 +86,7 @@ export async function GET() {
     custom_elements,
   })
 
-  data.forEach((item) => {
+  data.forEach((item: RSSProps['data'][number]) => {
     const render = () => {
       if (noRSS) {
         return ReactDOM.renderToString(
@@ -115,7 +115,9 @@ export async function GET() {
                     return <span>此图片不支持在 RSS Render 中查看。</span>
                   }
 
-                  const meta = item.images?.find((image) => image.src === src)
+                  const meta = item.images?.find(
+                    (image: Image) => image.src === src,
+                  )
 
                   return (
                     <img
