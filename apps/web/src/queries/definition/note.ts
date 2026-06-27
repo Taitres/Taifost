@@ -94,10 +94,15 @@ function ensureNoteWrappedEnvelope(raw: any): any {
   ) {
     return raw as NoteWrappedWithLikedAndTranslationPayload
   }
-  // Bare NoteModel — wrap it. Preserve any other top-level keys (next/prev).
-  const { data: noteModel, ...rest } = raw as NoteModel & Record<string, any>
+  // Bare NoteModel (returned by `apiClient.note.getNoteBy*`) — wrap it as the
+  // `data` field of the envelope and lift top-level siblings (`next`, `prev`,
+  // and any future adjacents) so legacy consumers like
+  // `useCurrentNoteDataSelector((d) => d?.prev?.nid)` keep working without
+  // touching every call site.
+  const { next, prev, ...noteModel } = (raw ?? {}) as Record<string, any>
   return {
     data: noteModel,
-    ...rest,
-  } as NoteWrappedWithLikedAndTranslationPayload
+    next: next ?? null,
+    prev: prev ?? null,
+  }
 }
