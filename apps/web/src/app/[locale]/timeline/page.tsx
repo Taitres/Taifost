@@ -20,6 +20,7 @@ import { BottomToUpSoftScaleTransitionView } from '~/components/ui/transition'
 import { useRouter } from '~/i18n/navigation'
 import { apiClient } from '~/lib/request'
 import { springScrollToElement } from '~/lib/scroller'
+import { buildNoteHref } from '~/lib/url-builder'
 
 enum ArticleType {
   Post,
@@ -159,7 +160,11 @@ export default function TimelinePage() {
           t('timeline_note'),
         ].filter(Boolean) as string[],
         date,
-        href: `/notes/${note.nid}`,
+        href: buildNoteHref({
+          nid: note.nid,
+          slug: (note as any).slug ?? String(note.nid),
+          created: note.created,
+        }),
 
         type: ArticleType.Note,
         id: note.id,

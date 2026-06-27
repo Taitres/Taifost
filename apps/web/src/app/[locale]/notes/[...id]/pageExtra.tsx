@@ -162,7 +162,7 @@ export const NoteDataReValidate: FC<{ fetchedAt: string }> = withClientOnly(
       if (!nid) return
 
       queryClient
-        .fetchQuery(queries.note.byNid(nid.toString(), null, locale))
+        .fetchQuery(queries.note.byId(nid.toString(), null, locale))
         .then((data) => {
           dataSetter(data as NoteWrappedWithLikedAndTranslationPayload)
           // toast.info('此文章访问的内容已过期，所以页面数据自动更新了。')

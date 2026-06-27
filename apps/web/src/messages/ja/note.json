@@ -14,5 +14,7 @@
   "topic_other_articles": "このコラムの他の記事：",
   "topic_header": "コラム - {name}",
   "topic_recent_update": "最近更新",
-  "topic_total_articles": "記事数：{total} 件"
+  "topic_total_articles": "記事数：{total} 件",
+  "notes_index_title": "すべての手記",
+  "notes_index_total": "全 {count} 件"
 }

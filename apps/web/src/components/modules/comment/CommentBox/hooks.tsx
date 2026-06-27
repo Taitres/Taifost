@@ -169,8 +169,8 @@ export const useSendComment = () => {
       // Reply Comment
       if (isReply) {
         if (isLogged) {
-          return apiClient.comment.proxy.owner
-            .reply(refId)
+          // v3 core route: POST /comments/owner-reply/:id
+          return apiClient.comment.proxy['owner-reply'](refId)
             .post<CommentModel>({
               data: {
                 text,
@@ -190,8 +190,10 @@ export const useSendComment = () => {
       const syncToRecently = jotaiStore.get(syncToRecentlyAtom)
 
       if (isLogged) {
-        return apiClient.comment.proxy.owner
-          .comment(refId)
+        // v3 core route: POST /comments/reader/:id (the logged-in commenter
+        // routes through the reader endpoint, not the legacy /owner path).
+        return apiClient.comment.proxy
+          .reader(refId)
           .post<CommentModel>({
             data: { text, source, ...(anchor ? { anchor } : {}) },
           })

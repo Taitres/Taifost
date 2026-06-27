@@ -29,6 +29,31 @@ export function isNoteModel(model: any): model is NoteModel {
   return isDefined(model.title) && isDefined(model.nid)
 }
 
+/**
+ * Build the canonical v3 note URL `/notes/yyyy/m/d/<slug>` from a NoteModel.
+ *
+ * The v3 backend exposes note detail at `/notes/:year/:month/:day/:slug` and
+ * the rest of the codebase links to notes by this pattern (e.g. RSS, JSON-LD,
+ * navigation). Falls back to the legacy `/notes/<nid>` form when the note has
+ * no `created` timestamp (which would only happen for hand-crafted fixtures).
+ */
+export function buildNoteHref(
+  note: Pick<NoteModel, 'nid' | 'slug' | 'created'>,
+) {
+  if (note.created) {
+    const d = new Date(note.created)
+    if (!Number.isNaN(d.getTime())) {
+      const y = d.getFullYear()
+      const m = d.getMonth() + 1
+      const day = d.getDate()
+      if (note.slug) {
+        return `/notes/${y}/${m}/${day}/${encodeURIComponent(note.slug)}`
+      }
+    }
+  }
+  return `/notes/${note.nid}`
+}
+
 function buildUrl(model: PostModel | NoteModel | PageModel) {
   if (isPostModel(model)) {
     // TODO
@@ -42,7 +67,7 @@ function buildUrl(model: PostModel | NoteModel | PageModel) {
   } else if (isPageModel(model)) {
     return `/${model.slug}`
   } else if (isNoteModel(model)) {
-    return `/notes/${model.nid}`
+    return buildNoteHref(model)
   }
 
   return '/'

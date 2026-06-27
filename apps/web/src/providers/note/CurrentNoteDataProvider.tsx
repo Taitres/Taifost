@@ -32,7 +32,7 @@ export const SyncNoteDataAfterLoggedIn = () => {
   const password = useSearchParams().get('password')
   const locale = useLocale()
   const { data } = useQuery({
-    ...queries.note.byNid(nid?.toString() || '', password, locale),
+    ...queries.note.byId(nid?.toString() || '', password, locale),
     enabled: !!nid,
   })
 

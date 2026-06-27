@@ -81,6 +81,8 @@ export default function Page() {
                   <Link
                     href={routeBuilder(Routes.Note, {
                       id: child.nid,
+                      created: child.created,
+                      slug: child.slug,
                     })}
                     className="min-w-0 truncate"
                   >

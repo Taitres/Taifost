@@ -49,6 +49,14 @@ type PostParams = {
 type NotesParams = Noop
 type NoteParams = WithId & {
   password?: string
+  /**
+   * v3 note URL shape: `/notes/<year>/<month>/<day>/<slug>`.
+   * When provided, the route builder emits this path verbatim instead of the
+   * legacy `/notes/<nid>` form so the v3 backend can resolve the route.
+   */
+  url?: string
+  slug?: string
+  created?: string
 }
 type TimelineParams = {
   type: 'note' | 'post' | 'all'
@@ -97,10 +105,35 @@ export function routeBuilder<T extends Routes>(
   let href: string = route
   switch (route) {
     case Routes.Note: {
-      href += (params as NoteParams).id
+      const p = params as NoteParams
 
-      if ((params as NoteParams).password) {
-        href += `?password=${(params as NoteParams).password}`
+      // Prefer the explicit v3 `/notes/yyyy/m/d/<slug>` URL when the caller
+      // hands us the timestamp and slug of a known note. Falls back to the
+      // legacy `/notes/<nid>` route for nid-only consumers.
+      let useV3Path = false
+      let slug = ''
+      let year = ''
+      let month = ''
+      let day = ''
+      if (p.created && p.slug) {
+        const d = new Date(p.created)
+        if (!Number.isNaN(d.getTime())) {
+          useV3Path = true
+          slug = p.slug
+          year = String(d.getFullYear())
+          month = String(d.getMonth() + 1)
+          day = String(d.getDate())
+        }
+      }
+
+      if (useV3Path) {
+        href += `${year}/${month}/${day}/${encodeURIComponent(slug)}`
+      } else {
+        href += p.id
+      }
+
+      if (p.password) {
+        href += `?password=${p.password}`
       }
       break
     }

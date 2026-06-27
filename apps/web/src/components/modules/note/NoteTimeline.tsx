@@ -83,6 +83,8 @@ const NoteTimelineImpl = () => {
               active={isCurrent}
               title={item.title}
               nid={item.nid}
+              created={item.created}
+              slug={item.slug}
             />
           )
         })}

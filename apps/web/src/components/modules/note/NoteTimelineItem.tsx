@@ -30,12 +30,16 @@ export const NoteTimelineItem = memo<{
   active: boolean
   title: string
   nid: number
+  created?: string
+  slug?: string
 
   layout?: boolean
 }>((props) => {
-  const { active, nid, title, layout } = props
+  const { active, nid, title, layout, created, slug } = props
   const href = routeBuilder(Routes.Note, {
     id: nid,
+    created,
+    slug,
   })
   return (
     <m.li

@@ -20,11 +20,17 @@ import type { EventHandler } from './types'
 import { trackerRealtimeEvent, updateMessage } from './types'
 
 export const noteCreateHandler: EventHandler = (data) => {
-  const { title, nid } = data as NoteModel
+  const { title, nid, slug, created } = data as NoteModel
 
   toast.success(`有新的内容发布了：「${title}」`, {
     onClick: () => {
-      window.peek(`/notes/${nid}`)
+      window.peek(
+        routeBuilder(Routes.Note, {
+          id: nid,
+          slug,
+          created,
+        }),
+      )
     },
     iconElement: React.createElement(FaSolidFeatherAlt),
     autoClose: false,
@@ -72,6 +78,8 @@ export const noteDeleteHandler: EventHandler = (data, { router }) => {
     location.pathname ===
       routeBuilder(Routes.Note, {
         id: note.id,
+        slug: note.slug,
+        created: note.created,
       }) &&
     getCurrentNoteData()?.data.id === note.id
   ) {

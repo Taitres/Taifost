@@ -69,6 +69,11 @@ export const ActivityPostList = () => {
               className="min-w-0 shrink truncate"
               href={routeBuilder(Routes.Note, {
                 id: note.nid,
+                created: note.created,
+                // v3 backend attaches `slug` even though the legacy type
+                // definition does not declare it. Fall back gracefully so
+                // old cache entries without the field still link somewhere.
+                slug: (note as any).slug,
               })}
             >
               {note.title}

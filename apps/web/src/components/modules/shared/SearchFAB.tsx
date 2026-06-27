@@ -28,6 +28,7 @@ import { Link } from '~/i18n/navigation'
 import { noopArr } from '~/lib/noop'
 import { apiClient } from '~/lib/request'
 import { jotaiStore } from '~/lib/store'
+import { buildNoteHref } from '~/lib/url-builder'
 
 const searchPanelOpenAtom = atom(false)
 const isComposingAtom = atom(false)
@@ -154,7 +155,7 @@ const SearchPanelImpl = () => {
                 title: item.title,
                 subtitle: t('search_note'),
                 id: item.id,
-                url: `/notes/${item.nid}`,
+                url: buildNoteHref(item),
               }
             }
             case 'page': {

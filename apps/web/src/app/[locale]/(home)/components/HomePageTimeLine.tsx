@@ -244,6 +244,8 @@ export const HomePageTimeLine = () => {
                                     'nid' in item
                                       ? routeBuilder(Routes.Note, {
                                           id: item.nid,
+                                          created: item.created,
+                                          slug: (item as any).slug,
                                         })
                                       : routeBuilder(Routes.Post, {
                                           category: item.category.slug,

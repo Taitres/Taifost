@@ -88,6 +88,8 @@ const NoteTopicRank: FC<{
                 active={false}
                 title={item.title}
                 nid={item.nid}
+                created={item.created}
+                slug={item.slug}
                 key={item.id}
               />
             ))}

@@ -135,8 +135,11 @@ const RoomsInfo = () => {
       const morphArticleIdToRoomName = (id: string) => `article_${id}`
       data.objects.notes.forEach((note: RoomOmittedNote) => {
         result.push({
+          // RoomOmittedNote only carries nid + created (no slug), so fall
+          // back to the legacy `/notes/<nid>` URL via routeBuilder.
           path: routeBuilder(Routes.Note, {
             id: note.nid,
+            created: note.created,
           }),
           title: note.title,
           count: data.roomCount[morphArticleIdToRoomName(note.id)],

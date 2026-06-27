@@ -14,5 +14,7 @@
   "topic_other_articles": "此专栏的其他文章：",
   "topic_header": "专栏 - {name}",
   "topic_recent_update": "最近更新",
-  "topic_total_articles": "共有文章：{total} 篇"
+  "topic_total_articles": "共有文章：{total} 篇",
+  "notes_index_title": "所有手记",
+  "notes_index_total": "共 {count} 篇"
 }

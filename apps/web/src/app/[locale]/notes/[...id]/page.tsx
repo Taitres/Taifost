@@ -129,7 +129,9 @@ function PageInner({
 }
 
 type NoteDetailPageParams = LocaleParams & {
-  id: string
+  // Catch-all: either a numeric nid (`1`) or the v3 date+slug path
+  // (`2026/6/17/fix-api-v3-aggregate-not-found-error`).
+  id: string[] | string
   password?: string
 }
 export const generateMetadata = async (props: {
@@ -154,15 +156,19 @@ export const generateMetadata = async (props: {
     const { data } = res
     const description = getSummaryFromMd(data.text ?? '')
 
+    const paramsIdStr = Array.isArray(params.id)
+      ? params.id.join('/')
+      : params.id
+
     const ogUrl = await getOgUrl(
       'note',
       {
-        nid: params.id,
+        nid: paramsIdStr,
       },
       params.locale,
     )
 
-    const canonicalPathNoLocale = `/notes/${params.id}`
+    const canonicalPathNoLocale = `/notes/${paramsIdStr}`
     const canonicalPath = buildLocalePrefixedPath(
       params.locale as any,
       canonicalPathNoLocale,
@@ -205,37 +211,42 @@ export default definePrerenderPage<NoteDetailPageParams>()<NoteDataResult>({
   requestErrorRenderer(_error, parsed, { id }) {
     const { status } = parsed
 
+    // `id` can be a string (legacy nid) or a string array (catch-all).
+    // `CurrentNoteNidProvider` expects a string, so coerce / pick the nid.
+    const nidForProvider =
+      typeof id === 'string' ? id : id.length === 1 ? id[0] : id.join('/')
+
     if (status === 403) {
       return (
         <Paper>
           <NotePasswordForm />
-          <CurrentNoteNidProvider nid={id} />
+          <CurrentNoteNidProvider nid={nidForProvider} />
         </Paper>
       )
     }
   },
-  async Component({
-    data: fetchedData,
-    params: { id: nid, locale },
-    fetchedAt,
-  }) {
+  async Component({ data: fetchedData, params: { id, locale }, fetchedAt }) {
     const { note: data } = fetchedData
     const t = await getTranslations({
       namespace: 'note',
       locale,
     })
 
+    // Normalise the catch-all `id` for the nid provider; pass through the
+    // joined form for new date+slug URLs so the key on Paper matches the URL.
+    const nidKey = Array.isArray(id) ? id.join('/') : id
+
     return (
       <TocHeadingStrategyProvider
         contentFormat={data.data.contentFormat}
         hasContent={!!data.data.content}
       >
-        <CurrentNoteNidProvider nid={nid} />
+        <CurrentNoteNidProvider nid={nidKey} />
         <CurrentNoteDataProvider data={data} />
         <NoteDataReValidate fetchedAt={fetchedAt} />
         <SyncNoteDataAfterLoggedIn />
         <Transition className="min-w-0" lcpOptimization>
-          <Paper key={nid} as={NoteMainContainer}>
+          <Paper key={nidKey} as={NoteMainContainer}>
             <PageInner
               data={data.data}
               privateLoginOnlyMessage={t('private_login_only')}

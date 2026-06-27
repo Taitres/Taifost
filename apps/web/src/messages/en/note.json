@@ -14,5 +14,7 @@
   "topic_other_articles": "Other articles in this series:",
   "topic_header": "Series - {name}",
   "topic_recent_update": "Recently updated",
-  "topic_total_articles": "Total articles: {total}"
+  "topic_total_articles": "Total articles: {total}",
+  "notes_index_title": "All notes",
+  "notes_index_total": "{count} in total"
 }

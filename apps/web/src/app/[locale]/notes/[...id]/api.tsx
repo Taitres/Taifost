@@ -6,7 +6,10 @@ import { requestErrorHandler } from '~/lib/request.server'
 import { queries } from '~/queries/definition'
 
 export interface NoteParams extends LocaleParams {
-  id: string
+  // Catch-all `[...id]` accepts either a numeric nid (`1`) or the v3
+  // canonical URL shape (`2026/6/17/fix-api-v3-aggregate-not-found-error`).
+  // Normalise both into a single `id` string used by the query layer.
+  id: string[] | string
   password?: string | string[] | null
   lang?: string
 }
@@ -15,15 +18,22 @@ export interface NoteDataResult {
   note: NoteWrappedWithLikedAndTranslationPayload
 }
 
+const normaliseNoteId = (raw: string[] | string): string => {
+  if (Array.isArray(raw)) {
+    return raw.map((seg) => decodeURIComponent(seg)).join('/')
+  }
+  return raw
+}
+
 const getNoteData = async (params: NoteParams, lang?: string) => {
   await attachServerFetch()
 
-  const { id } = params
+  const id = normaliseNoteId(params.id)
   const password = Array.isArray(params.password)
     ? params.password[0]
     : (params.password ?? undefined)
 
-  const query = queries.note.byNid(id, password, lang)
+  const query = queries.note.byId(id, password, lang)
 
   const data = await getQueryClient()
     .fetchQuery({

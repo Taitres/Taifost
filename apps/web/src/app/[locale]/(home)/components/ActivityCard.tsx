@@ -34,7 +34,11 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
             break
           }
           case CollectionRefTypes.Note: {
-            toLink = `/notes/${activity.nid}`
+            toLink = routeBuilder(Routes.Note, {
+              id: activity.nid!,
+              created: activity.created,
+              slug: activity.slug,
+            })
             break
           }
           case CollectionRefTypes.Page: {
@@ -99,7 +103,13 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
             </div>
             <div className="space-x-2">
               <small>{t('published')}</small>{' '}
-              <Link href={routeBuilder(Routes.Note, { id: activity.nid })}>
+              <Link
+                href={routeBuilder(Routes.Note, {
+                  id: activity.nid,
+                  created: activity.created,
+                  slug: (activity as any).slug,
+                })}
+              >
                 <b>{activity.title}</b>
               </Link>
             </div>
@@ -164,7 +174,13 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
           }
           case CollectionRefTypes.Note: {
             TitleLink = (
-              <Link href={`/notes/${activity.nid}`}>
+              <Link
+                href={routeBuilder(Routes.Note, {
+                  id: activity.nid!,
+                  created: activity.created,
+                  slug: activity.slug,
+                })}
+              >
                 <b>{activity.title}</b>
               </Link>
             )

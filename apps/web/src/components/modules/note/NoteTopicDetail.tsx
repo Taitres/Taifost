@@ -84,7 +84,7 @@ export const NoteTopicDetail: FC<{ topic: TopicModel }> = (props) => {
       {isLoading ? (
         <Loading className="my-4" />
       ) : (
-        data?.data[0] && (
+        data?.data?.[0] && (
           <p className="flex items-center">
             <MdiClockOutline />
             <DividerVertical />
@@ -92,15 +92,19 @@ export const NoteTopicDetail: FC<{ topic: TopicModel }> = (props) => {
             <DividerVertical />
             <span className="inline-flex min-w-0 shrink">
               <Link
-                href={routeBuilder(Routes.Note, { id: data?.data[0].nid })}
+                href={routeBuilder(Routes.Note, {
+                  id: data.data[0].nid,
+                  created: data.data[0].created,
+                  slug: data.data[0].slug,
+                })}
                 className="truncate"
               >
-                {data?.data[0]?.title}
+                {data.data[0]?.title}
               </Link>
               <span className="shrink-0">
                 （
                 <RelativeTime
-                  date={data?.data[0].modified || data?.data[0].created}
+                  date={data.data[0].modified || data.data[0].created}
                   displayAbsoluteTimeAfterDay={Infinity}
                 />
                 ）
@@ -125,7 +129,7 @@ export const NoteTopicDetail: FC<{ topic: TopicModel }> = (props) => {
 }
 
 export const ToTopicLink: FC = () => {
-  const topic = useCurrentNoteDataSelector((data) => data?.data.topic)
+  const topic = useCurrentNoteDataSelector((data) => data?.data?.topic)
   if (!topic) return null
   return (
     <Link
