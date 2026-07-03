@@ -73,8 +73,8 @@ export const CommentProvider: FC<{
     }
 
     dts(
-      (data as CommentThreadInfiniteData).pages.flatMap((page) =>
-        page.data.map((comment) => buildCommentTreeItem(comment)),
+      ((data as CommentThreadInfiniteData)?.pages ?? []).flatMap((page) =>
+        (page?.data ?? []).map((comment) => buildCommentTreeItem(comment)),
       ),
     )
 
@@ -86,7 +86,8 @@ export const CommentProvider: FC<{
     // v3: each comment has an embedded `reader` object.
     // Build a readers map from individual comments.
     const map: Record<string, ReaderModel> = {}
-    for (const page of data.pages) {
+    for (const page of data.pages ?? []) {
+      if (!page?.data) continue
       for (const comment of page.data) {
         const { reader } = comment as any
         if (reader && reader.id) {

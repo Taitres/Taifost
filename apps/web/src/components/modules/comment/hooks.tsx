@@ -21,11 +21,17 @@ export function useCommentsQuery(refId: string) {
     meta: {
       persist: false,
     },
-    getNextPageParam: (lastPage) =>
-      lastPage.pagination.hasNextPage
+    enabled: !!refId,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage?.pagination) return
+      return lastPage.pagination.hasNextPage
         ? lastPage.pagination.currentPage + 1
-        : undefined,
-    getPreviousPageParam: (firstPage) => firstPage.pagination.currentPage - 1,
+        : undefined
+    },
+    getPreviousPageParam: (firstPage) => {
+      if (!firstPage?.pagination) return
+      return firstPage.pagination.currentPage - 1
+    },
     initialPageParam: 1 as number | undefined,
   })
 

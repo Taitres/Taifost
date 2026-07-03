@@ -5,9 +5,13 @@ import { queryClient } from '~/providers/root/react-query-provider'
 
 export const useAckReadCount = (type: 'post' | 'note', id: string) => {
   useEffect(() => {
-    queryClient.fetchQuery({
-      queryKey: ['ack-read-count', type, id],
-      queryFn: async () => apiClient.ack.read(type, id),
-    })
+    queryClient
+      .fetchQuery({
+        queryKey: ['ack-read-count', type, id],
+        queryFn: async () => apiClient.ack.read(type, id),
+      })
+      .catch(() => {
+        // Silently ignore timeouts / network errors — ack is best-effort.
+      })
   }, [])
 }
