@@ -8,6 +8,15 @@
 
 import { atomWithStorage } from 'jotai/utils'
 
+interface SyncStorage<T> {
+  getItem(key: string): T
+  setItem(key: string, value: T): void
+  removeItem(key: string): void
+  clear(): void
+  key(index: number): string | null
+  get length(): number
+}
+
 function isStorageAvailable(): boolean {
   try {
     const key = '__storage_test__'
@@ -23,77 +32,88 @@ const storageAvailable = isStorageAvailable()
 
 const memoryStorage = new Map<string, string>()
 
-const safeStorage: Storage = {
-  getItem(key: string): string | null {
-    if (storageAvailable) {
-      try {
-        return localStorage.getItem(key)
-      } catch {
-        // fall through to memory fallback
+function createSafeStorage<T>(initialValue: T): SyncStorage<T> {
+  return {
+    getItem(key: string): T {
+      if (storageAvailable) {
+        try {
+          const value = localStorage.getItem(key)
+          if (value !== null) {
+            return JSON.parse(value) as T
+          }
+        } catch {
+          // fall through to memory fallback
+        }
       }
-    }
-    return memoryStorage.get(key) ?? null
-  },
+      const value = memoryStorage.get(key)
+      return value !== undefined ? (JSON.parse(value) as T) : initialValue
+    },
 
-  setItem(key: string, value: string): void {
-    if (storageAvailable) {
-      try {
-        localStorage.setItem(key, value)
-        return
-      } catch {
-        // fall through to memory fallback
+    setItem(key: string, value: T): void {
+      const serialized = JSON.stringify(value)
+      if (storageAvailable) {
+        try {
+          localStorage.setItem(key, serialized)
+          return
+        } catch {
+          // fall through to memory fallback
+        }
       }
-    }
-    memoryStorage.set(key, value)
-  },
+      memoryStorage.set(key, serialized)
+    },
 
-  removeItem(key: string): void {
-    if (storageAvailable) {
-      try {
-        localStorage.removeItem(key)
-        return
-      } catch {
-        // fall through to memory fallback
+    removeItem(key: string): void {
+      if (storageAvailable) {
+        try {
+          localStorage.removeItem(key)
+          return
+        } catch {
+          // fall through to memory fallback
+        }
       }
-    }
-    memoryStorage.delete(key)
-  },
+      memoryStorage.delete(key)
+    },
 
-  get length(): number {
-    if (storageAvailable) {
-      try {
-        return localStorage.length
-      } catch {
-        // fall through
+    clear(): void {
+      if (storageAvailable) {
+        try {
+          localStorage.clear()
+          return
+        } catch {
+          // fall through
+        }
       }
-    }
-    return memoryStorage.size
-  },
+      memoryStorage.clear()
+    },
 
-  clear(): void {
-    if (storageAvailable) {
-      try {
-        localStorage.clear()
-        return
-      } catch {
-        // fall through
+    get length(): number {
+      if (storageAvailable) {
+        try {
+          return localStorage.length
+        } catch {
+          // fall through
+        }
       }
-    }
-    memoryStorage.clear()
-  },
+      return memoryStorage.size
+    },
 
-  key(index: number): string | null {
-    if (storageAvailable) {
-      try {
-        return localStorage.key(index)
-      } catch {
-        // fall through
+    key(index: number): string | null {
+      if (storageAvailable) {
+        try {
+          return localStorage.key(index)
+        } catch {
+          // fall through
+        }
       }
-    }
-    return [...memoryStorage.keys()][index] ?? null
-  },
+      return [...memoryStorage.keys()][index] ?? null
+    },
+  }
 }
 
 export function atomWithSafeStorage<T>(key: string, initialValue: T) {
-  return atomWithStorage<T>(key, initialValue, safeStorage)
+  return atomWithStorage<T>(
+    key,
+    initialValue,
+    createSafeStorage<T>(initialValue),
+  )
 }
