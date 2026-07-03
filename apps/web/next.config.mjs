@@ -94,6 +94,7 @@ let nextConfig = {
         { source: '/atom.xml', destination: '/feed' },
         { source: '/feed.xml', destination: '/feed' },
         { source: '/sitemap.xml', destination: '/sitemap' },
+        { source: '/sitemap', destination: '/sitemap' },
       ],
     }
   },

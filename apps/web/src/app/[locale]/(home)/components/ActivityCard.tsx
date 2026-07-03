@@ -187,7 +187,11 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
             break
           }
           default: {
-            TitleLink = <b>{t('deleted_content')}</b>
+            if (activity.title) {
+              TitleLink = <b>{activity.title}</b>
+            } else {
+              TitleLink = <b>{t('deleted_content')}</b>
+            }
           }
         }
         return (

@@ -21,7 +21,7 @@ export const Comments: FC<CommentBaseProps> = ({ refId }) => {
         {useTypeScriptHappyCallback(
           (data) => {
             // sort by pin
-            const comments = data?.pages.flatMap((data) => data.data)
+            const comments = data?.pages?.flatMap((page) => page.data) ?? []
 
             return (
               <ul className="min-h-[400px] list-none space-y-4">

@@ -34,19 +34,38 @@ interface RSSProps {
 export async function GET() {
   const ReactDOM = (await import('react-dom/server')).default
 
-  const [{ author, data, url }, agg] = await Promise.all([
-    apiClient.aggregate.proxy.feed.get<RSSProps>(),
-    apiClient.aggregate.getAggregateData<AppThemeConfig>('shiro'),
-  ])
+  let feedRes: RSSProps | null = null
+  let agg: any = null
+  try {
+    const results = await Promise.allSettled([
+      apiClient.aggregate.proxy.feed.get<RSSProps>(),
+      apiClient.aggregate.getAggregateData<AppThemeConfig>('shiro'),
+    ])
+    if (results[0].status === 'fulfilled') {
+      feedRes = results[0].value
+    }
+    if (results[1].status === 'fulfilled') {
+      agg = results[1].value
+    }
+  } catch {
+    // fallback to empty data
+  }
 
-  const { title, description } = agg.seo
+  if (!feedRes || !agg) {
+    return new Response('Service Unavailable', { status: 503 })
+  }
+
+  const { author, data = [], url } = feedRes ?? {}
+
+  const { title, description } = agg.seo || {}
 
   const now = new Date()
-  const custom_elements = get(
-    agg.$raw.theme as AppConfig,
-    'config.module.rss.custom_elements',
-  )
-  const noRSS = get(agg.$raw.theme as AppConfig, 'config.module.rss.noRSS')
+  const custom_elements = agg?.$raw?.theme
+    ? get(agg.$raw.theme as AppConfig, 'config.module.rss.custom_elements')
+    : undefined
+  const noRSS = agg?.$raw?.theme
+    ? get(agg.$raw.theme as AppConfig, 'config.module.rss.noRSS')
+    : undefined
 
   const followChallengeIndex = custom_elements
     ? custom_elements.findIndex((item: any) => item.follow_challenge)
@@ -69,9 +88,8 @@ export async function GET() {
     ]
   }
 
-  const imageUrl = agg.theme?.config?.site?.favicon.startsWith('/')
-    ? `${url}${agg.theme?.config?.site?.favicon}`
-    : agg.theme?.config?.site?.favicon
+  const favicon = agg.theme?.config?.site?.favicon
+  const imageUrl = favicon?.startsWith('/') ? `${url}${favicon}` : favicon
 
   const feed = new RSS({
     title,

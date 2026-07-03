@@ -93,7 +93,7 @@ const CommentRender: Component<{
   const avatar = reader?.image || comment.avatar
   const author = reader?.name || comment.author
   const parentId = comment.parentCommentId ?? null
-  const displayText = comment.isDeleted ? t('deleted_placeholder') : text
+  const displayText = comment.isDeleted ? t('deleted_placeholder') : text || ''
 
   const authorUrl = useMemo(() => {
     if (url) return url

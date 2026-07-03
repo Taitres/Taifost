@@ -2,6 +2,7 @@
 
 import { RuleType } from 'markdown-to-jsx'
 
+import { useTranslation } from '~/atoms/translation'
 import { MainMarkdown, type MarkdownToJSX } from '~/components/ui/markdown'
 import { useCurrentNoteDataSelector } from '~/providers/note/CurrentNoteDataProvider'
 
@@ -23,6 +24,24 @@ export const NoteMarkdownRenderer = () => {
       renderers={MarkdownRenderers}
       variant="note"
       value={text}
+    />
+  )
+}
+
+export const NoteTranslationMarkdownRenderer = () => {
+  const providerTranslationText = useCurrentNoteDataSelector(
+    (data) => (data as any)?.translation?.text,
+  )
+  const atomTranslation = useTranslation()
+  const translationText = atomTranslation?.text || providerTranslationText
+  if (!translationText) return null
+  return (
+    <MainMarkdown
+      className="mt-10"
+      allowsScript
+      renderers={MarkdownRenderers}
+      variant="note"
+      value={translationText}
     />
   )
 }

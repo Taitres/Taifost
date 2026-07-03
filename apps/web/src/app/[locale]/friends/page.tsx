@@ -38,6 +38,10 @@ export default function Page() {
       return data
     },
     select: useCallback((data: LinkModel[]) => {
+      if (!Array.isArray(data)) {
+        return { friends: [], collections: [], outdated: [], banned: [] }
+      }
+
       const friends: LinkModel[] = []
       const collections: LinkModel[] = []
       const outdated: LinkModel[] = []
