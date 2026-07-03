@@ -1,6 +1,5 @@
 'use client'
 
-import { CollectionRefTypes } from '@mx-space/api-client'
 import clsx from 'clsx'
 import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
@@ -18,6 +17,15 @@ import { useAggregationSelector } from '~/providers/root/aggregation-data-provid
 
 import type { ReactActivityType } from './types'
 
+// CollectionRefTypes enum is only available as a type from @mx-space/api-client@2.x,
+// not as a runtime value. Define constants locally for runtime comparison.
+const REF_TYPE = {
+  Post: 'posts',
+  Note: 'notes',
+  Page: 'pages',
+  Recently: 'recentlies',
+} as const
+
 export const iconClassName =
   'rounded-full border shrink-0 border-accent/30 text-xs center inline-flex size-6 text-accent'
 
@@ -29,11 +37,11 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
       case 'comment': {
         let toLink = ''
         switch (activity.type) {
-          case CollectionRefTypes.Post: {
+          case REF_TYPE.Post: {
             toLink = `/posts/${activity.slug}`
             break
           }
-          case CollectionRefTypes.Note: {
+          case REF_TYPE.Note: {
             toLink = routeBuilder(Routes.Note, {
               id: activity.nid!,
               created: activity.created,
@@ -41,11 +49,11 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
             })
             break
           }
-          case CollectionRefTypes.Page: {
+          case REF_TYPE.Page: {
             toLink = `/${activity.slug}`
             break
           }
-          case CollectionRefTypes.Recently: {
+          case REF_TYPE.Recently: {
             toLink = `/thinking/${activity.id}`
             break
           }
@@ -73,7 +81,7 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
                 <Link className="shiro-link--underline" href={toLink}>
                   <b>
                     {activity.title ||
-                      (activity.type === CollectionRefTypes.Recently
+                      (activity.type === REF_TYPE.Recently
                         ? t('thought')
                         : null)}
                   </b>
@@ -164,7 +172,7 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
       case 'like': {
         let TitleLink: ReactNode = null
         switch (activity.type) {
-          case CollectionRefTypes.Post: {
+          case REF_TYPE.Post: {
             TitleLink = (
               <Link href={`/posts/${activity.slug}`}>
                 <b>{activity.title}</b>
@@ -172,7 +180,7 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
             )
             break
           }
-          case CollectionRefTypes.Note: {
+          case REF_TYPE.Note: {
             TitleLink = (
               <Link
                 href={routeBuilder(Routes.Note, {
@@ -187,7 +195,12 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
             break
           }
           default: {
-            if (activity.title) {
+            const hasValidTitle =
+              activity.title &&
+              typeof activity.title === 'string' &&
+              activity.title.length > 0
+
+            if (hasValidTitle) {
               TitleLink = <b>{activity.title}</b>
             } else {
               TitleLink = <b>{t('deleted_content')}</b>
