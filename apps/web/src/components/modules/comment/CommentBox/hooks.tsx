@@ -8,7 +8,7 @@ import type {
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { ExtractAtomValue } from 'jotai'
 import { atom, useAtomValue } from 'jotai'
-import { atomWithStorage, selectAtom } from 'jotai/utils'
+import { selectAtom } from 'jotai/utils'
 import { useTranslations } from 'next-intl'
 import type { PropsWithChildren } from 'react'
 import { use, useCallback } from 'react'
@@ -16,6 +16,7 @@ import { use, useCallback } from 'react'
 import { useIsOwnerLogged } from '~/atoms/hooks/owner'
 import { apiClient } from '~/lib/request'
 import { getErrorMessageFromRequestError } from '~/lib/request.shared'
+import { atomWithSafeStorage } from '~/lib/safe-storage'
 import { jotaiStore } from '~/lib/store'
 import { toast } from '~/lib/toast'
 import { buildCommentsQueryKey } from '~/queries/keys'
@@ -98,7 +99,7 @@ export const enum CommentBoxMode {
   'with-auth',
 }
 
-const commentModeAtom = atomWithStorage(
+const commentModeAtom = atomWithSafeStorage(
   'comment-mode',
   CommentBoxMode['with-auth'],
 )

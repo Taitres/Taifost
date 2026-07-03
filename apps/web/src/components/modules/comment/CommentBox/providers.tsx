@@ -2,11 +2,11 @@
 
 import type { CommentModel } from '@mx-space/api-client'
 import { atom } from 'jotai'
-import { atomWithStorage } from 'jotai/utils'
 import type { FC, PropsWithChildren } from 'react'
 import { createContext, memo, useEffect, useMemo } from 'react'
 
 import { useBeforeMounted } from '~/hooks/common/use-before-mounted'
+import { atomWithSafeStorage } from '~/lib/safe-storage'
 import { jotaiStore } from '~/lib/store'
 
 import type { CommentAnchor } from '../types'
@@ -17,9 +17,9 @@ export const createInitialValue = () => ({
   refId: atom(''),
 
   text: atom(''),
-  author: atomWithStorage(`${commentStoragePrefix}author`, ''),
-  mail: atomWithStorage(`${commentStoragePrefix}mail`, ''),
-  url: atomWithStorage(`${commentStoragePrefix}url`, ''),
+  author: atomWithSafeStorage(`${commentStoragePrefix}author`, ''),
+  mail: atomWithSafeStorage(`${commentStoragePrefix}mail`, ''),
+  url: atomWithSafeStorage(`${commentStoragePrefix}url`, ''),
 
   avatar: atom(''),
   source: atom(''),
@@ -27,8 +27,8 @@ export const createInitialValue = () => ({
   anchor: atom<CommentAnchor | null>(null),
 
   // settings
-  isWhisper: atomWithStorage(`${commentStoragePrefix}is-whisper`, false),
-  syncToRecently: atomWithStorage(
+  isWhisper: atomWithSafeStorage(`${commentStoragePrefix}is-whisper`, false),
+  syncToRecently: atomWithSafeStorage(
     `${commentStoragePrefix}sync-to-recently`,
     true,
   ),
