@@ -56,7 +56,6 @@ export const PostTranslationBanner = () => {
       <div className="flex gap-2">
         <StyledButton
           variant={viewingOriginal ? 'primary' : 'secondary'}
-          size="sm"
           onClick={() => {
             setViewingOriginal(!viewingOriginal)
           }}
@@ -104,7 +103,6 @@ export const NoteTranslationBanner = () => {
       <div className="flex gap-2">
         <StyledButton
           variant={viewingOriginal ? 'primary' : 'secondary'}
-          size="sm"
           onClick={() => {
             setViewingOriginal(!viewingOriginal)
           }}
