@@ -1,3 +1,5 @@
+'use client'
+
 import { useTranslation, useViewingOriginal } from '~/atoms/translation'
 import { useCurrentPostDataSelector } from '~/providers/post/CurrentPostDataProvider'
 
