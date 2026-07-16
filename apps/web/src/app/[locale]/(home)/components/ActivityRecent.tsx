@@ -24,6 +24,11 @@ export const ActivityRecent = () => {
     },
   })
 
+  const meta = (data as any)?.meta
+  const translation = meta?.translation as
+    | Record<string, { title?: string }>
+    | undefined
+
   const flatData = useMemo(
     () =>
       [...Object.entries(data || {})]
@@ -81,7 +86,7 @@ export const ActivityRecent = () => {
                 key={`${activity.bizType}-${activity.id}-${activity.created}`}
                 className="flex min-w-0 justify-between"
               >
-                <ActivityCard activity={activity} />
+                <ActivityCard activity={activity} translation={translation} />
               </li>
             ))}
           </ul>

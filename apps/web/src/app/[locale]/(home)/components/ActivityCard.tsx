@@ -29,9 +29,18 @@ const REF_TYPE = {
 export const iconClassName =
   'rounded-full border shrink-0 border-accent/30 text-xs center inline-flex size-6 text-accent'
 
-export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
+export const ActivityCard = ({
+  activity,
+  translation,
+}: {
+  activity: ReactActivityType
+  translation?: Record<string, { title?: string }>
+}) => {
   const t = useTranslations('common')
   const siteOwner = useAggregationSelector((state) => state.user)
+  const tl = translation?.[activity.id]?.title
+  const translatedTitle =
+    tl ?? ('title' in activity ? activity.title : undefined)
   const Content = useMemo(() => {
     switch (activity.bizType) {
       case 'comment': {
@@ -80,7 +89,7 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
                 <small>{t('in')}</small>{' '}
                 <Link className="shiro-link--underline" href={toLink}>
                   <b>
-                    {activity.title ||
+                    {translatedTitle ||
                       (activity.type === REF_TYPE.Recently
                         ? t('thought')
                         : null)}
@@ -118,7 +127,7 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
                   slug: (activity as any).slug,
                 })}
               >
-                <b>{activity.title}</b>
+                <b>{translatedTitle}</b>
               </Link>
             </div>
           </div>
@@ -133,7 +142,7 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
             <div className="space-x-2">
               <small>{t('published')}</small>{' '}
               <Link href={`/posts/${activity.slug}`}>
-                <b>{activity.title}</b>
+                <b>{translatedTitle}</b>
               </Link>
             </div>
           </div>
@@ -175,7 +184,7 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
           case REF_TYPE.Post: {
             TitleLink = (
               <Link href={`/posts/${activity.slug}`}>
-                <b>{activity.title}</b>
+                <b>{translatedTitle}</b>
               </Link>
             )
             break
@@ -189,19 +198,19 @@ export const ActivityCard = ({ activity }: { activity: ReactActivityType }) => {
                   slug: activity.slug,
                 })}
               >
-                <b>{activity.title}</b>
+                <b>{translatedTitle}</b>
               </Link>
             )
             break
           }
           default: {
             const hasValidTitle =
-              activity.title &&
-              typeof activity.title === 'string' &&
-              activity.title.length > 0
+              translatedTitle &&
+              typeof translatedTitle === 'string' &&
+              translatedTitle.length > 0
 
             if (hasValidTitle) {
-              TitleLink = <b>{activity.title}</b>
+              TitleLink = <b>{translatedTitle}</b>
             } else {
               TitleLink = <b>{t('deleted_content')}</b>
             }
