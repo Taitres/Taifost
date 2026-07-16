@@ -47,19 +47,27 @@ export const ActivityCard = ({
         let toLink = ''
         switch (activity.type) {
           case REF_TYPE.Post: {
-            toLink = `/posts/${activity.slug}`
+            if (activity.slug) {
+              toLink = `/posts/${activity.slug}`
+            } else if (activity.nid) {
+              toLink = `/posts/${activity.nid}`
+            }
             break
           }
           case REF_TYPE.Note: {
-            toLink = routeBuilder(Routes.Note, {
-              id: activity.nid!,
-              created: activity.created,
-              slug: activity.slug,
-            })
+            if (activity.nid) {
+              toLink = routeBuilder(Routes.Note, {
+                id: activity.nid,
+                created: activity.created,
+                slug: activity.slug,
+              })
+            }
             break
           }
           case REF_TYPE.Page: {
-            toLink = `/${activity.slug}`
+            if (activity.slug) {
+              toLink = `/${activity.slug}`
+            }
             break
           }
           case REF_TYPE.Recently: {
