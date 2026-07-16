@@ -47,8 +47,11 @@ export const ActivityCard = ({
         let toLink = ''
         switch (activity.type) {
           case REF_TYPE.Post: {
+            const categorySlug = (activity as any).category?.slug
             if (activity.slug) {
-              toLink = `/posts/${activity.slug}`
+              toLink = categorySlug
+                ? `/posts/${categorySlug}/${activity.slug}`
+                : `/posts/${activity.slug}`
             } else if (activity.nid) {
               toLink = `/posts/${activity.nid}`
             }
