@@ -34,7 +34,7 @@ export default function Page() {
   const { data, isLoading } = useQuery({
     queryKey: ['friends'],
     queryFn: async () => {
-      const { data } = await apiClient.link.getAll()
+      const data = (await apiClient.link.getAll()) as unknown as LinkModel[]
       return data
     },
     select: useCallback((data: LinkModel[]) => {

@@ -13,7 +13,15 @@ import { useHomeQueryData } from '../query'
 
 export const ActivityPostList = () => {
   const t = useTranslations('post')
-  const { notes, posts } = useHomeQueryData()
+  const homeData = useHomeQueryData()
+  const { notes = [], posts = [] } = homeData ?? {}
+  const meta = (homeData as any)?.meta
+
+  const translatedTitle = (item: { id: string; title: string }) => {
+    const tl = meta?.translation?.[item.id]
+    return tl?.title ?? item.title
+  }
+
   return (
     <m.section
       initial={{ opacity: 0.0001, y: 50 }}
@@ -25,7 +33,7 @@ export const ActivityPostList = () => {
       <h2 className="text-2xl font-medium leading-loose">
         {t('recent_posts')}
       </h2>
-      <ul className="shiro-timeline mt-4">
+      <ul className="cyber-timeline mt-4">
         {posts.map((post) => (
           <li key={post.id} className="flex min-w-0 justify-between">
             <Link
@@ -36,7 +44,7 @@ export const ActivityPostList = () => {
                 slug: post.slug,
               })}
             >
-              {post.title}
+              {translatedTitle(post)}
             </Link>
 
             <span className="ml-2 shrink-0 self-end text-xs opacity-70">
@@ -62,7 +70,7 @@ export const ActivityPostList = () => {
       <h2 className="text-2xl font-medium leading-loose">
         {t('recent_notes')}
       </h2>
-      <ul className="shiro-timeline mt-4">
+      <ul className="cyber-timeline mt-4">
         {notes.map((note) => (
           <li key={note.id} className="flex min-w-0 justify-between">
             <Link
@@ -76,7 +84,7 @@ export const ActivityPostList = () => {
                 slug: (note as any).slug,
               })}
             >
-              {note.title}
+              {translatedTitle(note)}
             </Link>
 
             <span className="ml-2 shrink-0 self-end text-xs opacity-70">
