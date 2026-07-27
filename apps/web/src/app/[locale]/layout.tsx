@@ -63,6 +63,8 @@ export const generateMetadata = async ({
     theme: { config },
   } = fetchedData
 
+  const webUrl = url?.webUrl || ''
+
   const localeMap: Record<string, string> = {
     zh: 'zh_CN',
     en: 'en_US',
@@ -70,29 +72,29 @@ export const generateMetadata = async ({
   }
 
   return {
-    metadataBase: new URL(url.webUrl),
+    metadataBase: webUrl ? new URL(webUrl) : undefined,
     title: {
-      template: `%s - ${seo.title}`,
-      default: `${seo.title} - ${seo.description}`,
+      template: `%s - ${seo?.title}`,
+      default: `${seo?.title} - ${seo?.description}`,
     },
-    description: seo.description,
-    keywords: seo.keywords?.join(',') || '',
+    description: seo?.description,
+    keywords: seo?.keywords?.join(',') || '',
     icons: [
       {
-        url: config.site.favicon,
+        url: config?.site?.favicon,
         type: 'image/svg+xml',
         sizes: 'any',
       },
       {
         rel: 'icon',
         type: 'image/svg+xml',
-        url: config.site.favicon,
+        url: config?.site?.favicon,
         media: '(prefers-color-scheme: light)',
       },
       {
         rel: 'icon',
         type: 'image/svg+xml',
-        url: config.site.faviconDark || config.site.favicon,
+        url: config?.site?.faviconDark || config?.site?.favicon,
         media: '(prefers-color-scheme: dark)',
       },
     ],
@@ -110,28 +112,32 @@ export const generateMetadata = async ({
     },
     openGraph: {
       title: {
-        default: seo.title,
-        template: `%s | ${seo.title}`,
+        default: seo?.title,
+        template: `%s | ${seo?.title}`,
       },
-      description: seo.description,
-      siteName: `${seo.title}`,
+      description: seo?.description,
+      siteName: `${seo?.title}`,
       locale: localeMap[locale] || 'zh_CN',
       type: 'website',
-      url: url.webUrl,
-      images: {
-        url: `${url.webUrl}/home-og`,
-        username: user.name,
-      },
+      url: webUrl || undefined,
+      ...(webUrl
+        ? {
+            images: {
+              url: `${webUrl}/home-og`,
+              username: user?.name,
+            },
+          }
+        : {}),
     },
     twitter: {
-      creator: `@${user.socialIds?.twitter || user.socialIds?.x || '__oQuery'}`,
+      creator: `@${user?.socialIds?.twitter || user?.socialIds?.x || '__oQuery'}`,
       card: 'summary_large_image',
-      title: seo.title,
-      description: seo.description,
+      title: seo?.title,
+      description: seo?.description,
     },
 
     alternates: {
-      canonical: url.webUrl,
+      canonical: webUrl || undefined,
       types: {
         'application/rss+xml': [{ url: 'feed', title: 'RSS 订阅' }],
       },
@@ -195,7 +201,7 @@ export default async function LocaleLayout({ children, params }: Props) {
       .join('; '),
   )
 
-  headers.append('user-agent', 'Shiro')
+  headers.append('user-agent', 'Cyber')
 
   const userAuth = await fetch(
     apiClient.proxy('owner')('check_logged').toString(true),
@@ -207,35 +213,39 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <>
-      <AppFeatureProvider tmdb={!!process.env.TMDB_API_KEY}>
-        <HydrateuserAuthProvider isLogged={userAuth} />
-        <html lang={locale} className="noise themed" suppressHydrationWarning>
-          <head>
-            <PublicEnvScript />
-            <Global />
-            <SayHi />
-            <HydrationEndDetector />
-            {themeConfig.config?.color && (
-              <AccentColorStyleInjector color={themeConfig.config.color} />
-            )}
+      <html lang={locale} className="noise themed" suppressHydrationWarning>
+        <head>
+          <PublicEnvScript />
+          <Global />
+          <SayHi />
+          <HydrationEndDetector />
+          {themeConfig?.config?.color && (
+            <AccentColorStyleInjector color={themeConfig.config.color} />
+          )}
+          {themeConfig?.config?.site?.faviconDark && (
             <link
               rel="shortcut icon"
               href={themeConfig.config.site.faviconDark}
               type="image/x-icon"
               media="(prefers-color-scheme: dark)"
             />
+          )}
+          {themeConfig?.config?.site?.favicon && (
             <link
               rel="shortcut icon"
               href={themeConfig.config.site.favicon}
               type="image/x-icon"
               media="(prefers-color-scheme: light)"
             />
-            <ScriptInjectProvider />
-          </head>
-          <body
-            suppressHydrationWarning
-            className={`${sansFont.variable} ${serifFont.variable} m-0 h-full p-0 font-sans`}
-          >
+          )}
+          <ScriptInjectProvider />
+        </head>
+        <body
+          suppressHydrationWarning
+          className={`${sansFont.variable} ${serifFont.variable} m-0 h-full p-0 font-sans`}
+        >
+          <AppFeatureProvider tmdb={!!process.env.TMDB_API_KEY}>
+            <HydrateuserAuthProvider isLogged={userAuth} />
             <NextIntlClientProvider messages={messages}>
               <ErrorBoundary>
                 <WebAppProviders>
@@ -253,9 +263,9 @@ export default async function LocaleLayout({ children, params }: Props) {
                 </WebAppProviders>
               </ErrorBoundary>
             </NextIntlClientProvider>
-          </body>
-        </html>
-      </AppFeatureProvider>
+          </AppFeatureProvider>
+        </body>
+      </html>
     </>
   )
 }
@@ -271,7 +281,7 @@ const SayHi = () => (
         'margin: 1em 0; padding: 5px 0; background: #efefef;',
       )
       console.info(
-        `%c Shiro ${window.version} %c https://github.com/Innei/Shiro`,
+        `%c Cyber ${window.version} %c https://github.com/At87668/Cyber`,
         'color: #fff; margin: 1em 0; padding: 5px 0; background: #39C5BB;',
         'margin: 1em 0; padding: 5px 0; background: #efefef;',
       )
