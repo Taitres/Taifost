@@ -2,6 +2,7 @@ import {
   allControllers,
   createClient,
   type IRequestAdapter,
+  simpleCamelcaseKeys,
 } from '@mx-space/api-client'
 import type { $fetch } from 'ofetch'
 
@@ -98,8 +99,9 @@ export const createFetchAdapter = (
 
 const remapPagination = (pg: any) => {
   if (!pg || typeof pg !== 'object') return pg
-  const currentPage = pg.currentPage ?? pg.page
-  const totalPage = pg.totalPage ?? pg.totalPages
+  const currentPage = pg.currentPage ?? pg.page ?? pg.current_page
+  const totalPage =
+    pg.totalPage ?? pg.totalPages ?? pg.total_pages ?? pg.totalpage
   const { total } = pg
   const { size } = pg
   const out: Record<string, unknown> = {
@@ -125,14 +127,32 @@ const isPaginateLike = (
 ): v is { data: unknown[]; pagination?: any } =>
   !!v && typeof v === 'object' && Array.isArray((v as any).data)
 
+const FIELD_ALIASES: Record<string, string> = {
+  created_at: 'created',
+  modified_at: 'modified',
+}
+
+const applyFieldAliases = (value: any): any => {
+  if (Array.isArray(value)) return value.map(applyFieldAliases)
+  if (value && typeof value === 'object') {
+    const out: Record<string, any> = {}
+    for (const [key, nested] of Object.entries(value)) {
+      out[FIELD_ALIASES[key] ?? key] = applyFieldAliases(nested)
+    }
+    return out
+  }
+  return value
+}
+
 const legacyTransformResponse = <T = any>(data: any): T => {
-  if (isPaginateLike(data)) {
+  const aliased = applyFieldAliases(data)
+  if (isPaginateLike(aliased)) {
     return {
-      ...data,
-      pagination: remapPagination(data.pagination),
+      ...simpleCamelcaseKeys(aliased),
+      pagination: remapPagination(aliased.pagination),
     } as T
   }
-  return data as T
+  return simpleCamelcaseKeys(aliased) as T
 }
 
 export const createApiClient = (
@@ -141,4 +161,23 @@ export const createApiClient = (
   createClient(fetchAdapter)(API_URL, {
     controllers: allControllers,
     transformResponse: legacyTransformResponse,
+    getDataFromResponse: (response: any) => {
+      if (!response) return null
+
+      if (response.meta?.pagination && Array.isArray(response.data)) {
+        return {
+          data: response.data,
+          pagination: remapPagination(response.meta.pagination),
+        }
+      }
+
+      if ('data' in response && !Array.isArray(response.data)) {
+        if (response.meta) {
+          return { ...response.data, meta: response.meta }
+        }
+        return response.data
+      }
+
+      return response.data ?? response ?? null
+    },
   })
