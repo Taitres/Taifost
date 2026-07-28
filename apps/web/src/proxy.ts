@@ -13,6 +13,7 @@ import {
 } from './constants/system'
 import { defaultLocale, locales } from './i18n/config'
 import { routing } from './i18n/routing'
+import { applyMiddlewareRequestHeaders } from './lib/middleware-request-headers'
 
 const intlMiddleware = createIntlMiddleware(routing)
 
@@ -148,13 +149,6 @@ export async function proxy(req: NextRequest) {
 
     const intlResponse = intlMiddleware(req)
 
-    // Copy headers from intl response
-    if (intlResponse.headers) {
-      intlResponse.headers.forEach((value, key) => {
-        requestHeaders.set(key, value)
-      })
-    }
-
     // Persist resolved locale for server-side fetching (e.g. as `x-lang`)
     requestHeaders.set(
       REQUEST_LOCALE,
@@ -171,22 +165,11 @@ export async function proxy(req: NextRequest) {
       return intlResponse
     }
 
-    // Handle rewrites (for as-needed mode with default locale)
-    const rewriteHeader = intlResponse.headers.get('x-middleware-rewrite')
-    if (rewriteHeader) {
-      const rewriteUrl = new URL(rewriteHeader)
-      return NextResponse.rewrite(rewriteUrl, {
-        request: {
-          headers: requestHeaders,
-        },
-      })
-    }
-
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    })
+    // Keep next-intl's original rewrite/next response intact. Copying its
+    // response-only headers into the request produces a rewrite loop in the
+    // standalone server.
+    applyMiddlewareRequestHeaders(intlResponse.headers, requestHeaders)
+    return intlResponse
   }
 
   // Routes that skip next-intl still benefit from having a stable locale header.
