@@ -1,17 +1,19 @@
-FROM node:22-alpine AS base
+FROM node:22 AS base
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable
 
 FROM base AS deps
-RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
+COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN --mount=type=cache,id=marlin-shiro-pnpm,target=/pnpm/store \
+  pnpm config set store-dir /pnpm/store && pnpm fetch --frozen-lockfile
 COPY . .
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=marlin-shiro-pnpm,target=/pnpm/store \
+  pnpm install --offline --frozen-lockfile
 
 FROM base AS builder
-RUN apk add --no-cache git
 WORKDIR /app
 COPY --from=deps /app .
 
@@ -24,16 +26,16 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN pnpm --filter @shiro/web build
 
-FROM base AS runner
+FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
 ENV PORT=2323
-ENV NEXT_SHARP_PATH=/usr/local/lib/node_modules/sharp
 
-RUN apk add --no-cache curl fontconfig font-noto font-noto-cjk \
-  && npm install -g --arch=x64 --platform=linux sharp \
-  && fc-cache -f
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates curl fontconfig fonts-noto-cjk \
+  && fc-cache -f \
+  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/apps/web/public ./apps/web/public
 COPY --from=builder /app/apps/web/.next/standalone ./
