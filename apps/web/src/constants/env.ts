@@ -10,7 +10,7 @@ const normalizeCoreApiUrl = (value: string) => {
 
 export const API_URL: string = (() => {
   const configuredApiUrl =
-    process.env.NEXT_PUBLIC_API_URL || env('NEXT_PUBLIC_API_URL') || ''
+    env('NEXT_PUBLIC_API_URL') || process.env.NEXT_PUBLIC_API_URL || ''
 
   if (isDev) return normalizeCoreApiUrl(configuredApiUrl)
 
