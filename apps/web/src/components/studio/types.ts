@@ -34,6 +34,18 @@ export interface Category {
   slug: string
 }
 
+export interface CorePage {
+  id: string
+  title: string
+  slug: string
+  subtitle?: string | null
+  text: string
+  content_format: 'markdown' | 'lexical'
+  order: number
+  created_at: string
+  modified_at?: string | null
+}
+
 export interface Revision {
   id: string
   version: number
@@ -51,6 +63,9 @@ export interface Review {
   revision_id: string
   status: string
   expires_at: string
+  reviewer_email?: string | null
+  email_status?: 'not_requested' | 'pending' | 'sent' | 'failed'
+  email_error?: string | null
 }
 
 export interface Publication {

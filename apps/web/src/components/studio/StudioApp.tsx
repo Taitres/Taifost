@@ -12,12 +12,14 @@ import {
 import { AiSection } from './AiSection'
 import { HotspotsSection } from './HotspotsSection'
 import { MaterialsSection } from './MaterialsSection'
+import { PagesSection } from './PagesSection'
 import { StatusPill, StudioButton, StudioCard } from './primitives'
 import { ProjectsSection } from './ProjectsSection'
 import { StudioLogin } from './StudioLogin'
 import type {
   AiRole,
   Category,
+  CorePage,
   HotspotCandidate,
   HotspotSource,
   HotspotTheme,
@@ -25,7 +27,13 @@ import type {
   Project,
 } from './types'
 
-type Section = 'overview' | 'materials' | 'hotspots' | 'projects' | 'ai'
+type Section =
+  | 'overview'
+  | 'materials'
+  | 'hotspots'
+  | 'projects'
+  | 'pages'
+  | 'ai'
 
 const navigation: Array<{
   id: Section
@@ -37,6 +45,7 @@ const navigation: Array<{
   { id: 'materials', label: '素材库', description: '冻结与证据', icon: '◫' },
   { id: 'hotspots', label: '热点雷达', description: '采集与筛选', icon: '⌖' },
   { id: 'projects', label: '创作项目', description: '修订与发布', icon: '✎' },
+  { id: 'pages', label: '独立页面', description: '跳过审阅', icon: '▤' },
   { id: 'ai', label: 'AI 编辑部', description: '角色与预算', icon: '✦' },
 ]
 
@@ -48,6 +57,7 @@ interface StudioData {
   candidates: HotspotCandidate[]
   roles: AiRole[]
   categories: Category[]
+  pages: CorePage[]
 }
 
 const emptyData: StudioData = {
@@ -58,6 +68,7 @@ const emptyData: StudioData = {
   candidates: [],
   roles: [],
   categories: [],
+  pages: [],
 }
 
 export function StudioApp() {
@@ -86,6 +97,7 @@ export function StudioApp() {
         candidates,
         roles,
         categories,
+        pages,
       ] = await Promise.all([
         studioRequest<Material[]>('/marlin/materials?page=1&size=100'),
         studioRequest<Project[]>('/marlin/projects?page=1&size=100'),
@@ -96,6 +108,7 @@ export function StudioApp() {
         ),
         studioRequest<AiRole[]>('/marlin/ai/roles'),
         studioRequest<Category[]>('/categories?page=1&size=100'),
+        studioRequest<CorePage[]>('/pages?page=1&size=100'),
       ])
       setData({
         materials,
@@ -105,6 +118,7 @@ export function StudioApp() {
         candidates,
         roles,
         categories,
+        pages,
       })
     } catch (error) {
       if (error instanceof StudioApiError && error.status === 401) {
@@ -257,6 +271,9 @@ export function StudioApp() {
               reload={load}
               notify={notify}
             />
+          )}
+          {section === 'pages' && (
+            <PagesSection pages={data.pages} reload={load} notify={notify} />
           )}
           {section === 'ai' && (
             <AiSection

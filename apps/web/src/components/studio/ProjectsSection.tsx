@@ -21,6 +21,11 @@ interface ReviewCredential {
   id: string
   passcode: string
   review_path: string
+  email_delivery?: {
+    status: 'not_requested' | 'sent' | 'failed'
+    to?: string
+    error?: string
+  }
 }
 
 export function ProjectsSection({
@@ -51,6 +56,7 @@ export function ProjectsSection({
     tags: '',
   })
   const [scheduledAt, setScheduledAt] = useState('')
+  const [reviewerEmail, setReviewerEmail] = useState('')
 
   const loadProject = async (id = selectedId) => {
     if (!id) {
@@ -461,7 +467,19 @@ export function ProjectsSection({
                 <h3 className="font-semibold">审阅与决策</h3>
               </div>
               <div className="flex flex-wrap gap-3">
+                <StudioLabel
+                  label="审阅人邮箱"
+                  hint="可选；配置 Core 邮件后自动发送"
+                >
+                  <StudioInput
+                    type="email"
+                    value={reviewerEmail}
+                    onChange={(event) => setReviewerEmail(event.target.value)}
+                    placeholder="reviewer@example.com"
+                  />
+                </StudioLabel>
                 <StudioButton
+                  className="self-end"
                   disabled={!project.current_revision_id}
                   onClick={async () => {
                     try {
@@ -469,16 +487,27 @@ export function ProjectsSection({
                         request: { id: string }
                         passcode: string
                         review_path: string
+                        email_delivery?: ReviewCredential['email_delivery']
                       }>(`/marlin/projects/${project.id}/reviews`, {
                         method: 'POST',
-                        body: studioJson({ expires_in_hours: 72 }),
+                        body: studioJson({
+                          expires_in_hours: 72,
+                          reviewer_email: reviewerEmail || undefined,
+                        }),
                       })
                       setCredential({
                         id: result.request.id,
                         passcode: result.passcode,
                         review_path: result.review_path,
+                        email_delivery: result.email_delivery,
                       })
-                      await afterMutation('审阅请求已创建')
+                      await afterMutation(
+                        result.email_delivery?.status === 'sent'
+                          ? '审阅请求已创建并发送邮件'
+                          : result.email_delivery?.status === 'failed'
+                            ? '审阅请求已创建，但邮件发送失败'
+                            : '审阅请求已创建',
+                      )
                     } catch (error) {
                       notify(
                         error instanceof Error ? error.message : '创建审阅失败',
@@ -498,6 +527,16 @@ export function ProjectsSection({
                   <p className="mt-2 font-mono text-3xl font-black tracking-[0.3em]">
                     {credential.passcode}
                   </p>
+                  {credential.email_delivery?.status === 'sent' && (
+                    <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-300">
+                      已发送至 {credential.email_delivery.to}
+                    </p>
+                  )}
+                  {credential.email_delivery?.status === 'failed' && (
+                    <p className="mt-2 text-sm text-red-700 dark:text-red-300">
+                      邮件失败：{credential.email_delivery.error}
+                    </p>
+                  )}
                   <div className="mt-3 flex flex-wrap gap-2">
                     <StudioButton
                       tone="secondary"
