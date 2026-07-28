@@ -33,12 +33,40 @@ export function MaterialsSection({
     sourceType: 'manual',
     sourceRef: '',
     content: '',
+    originalFilename: '',
   })
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setPending(true)
     try {
+      if (form.kind === 'url') {
+        const result = await studioRequest<{
+          deduplicated: boolean
+          material: Material
+        }>('/marlin/materials/from-url', {
+          method: 'POST',
+          body: studioJson({
+            url: form.sourceRef,
+            title: form.title || undefined,
+            metadata: { imported_from: 'shiro-studio' },
+          }),
+        })
+        notify(
+          result.deduplicated
+            ? '链接内容已存在，已追加导入证据'
+            : '链接正文已抓取并冻结',
+        )
+        setForm((value) => ({
+          ...value,
+          title: '',
+          sourceRef: '',
+          content: '',
+        }))
+        await reload()
+        return
+      }
+
       const result = await studioRequest<{
         deduplicated: boolean
         material: Material
@@ -49,6 +77,7 @@ export function MaterialsSection({
           kind: form.kind,
           source_type: form.sourceType,
           source_ref: form.sourceRef || undefined,
+          original_filename: form.originalFilename || undefined,
           content: form.content,
           mime_type:
             form.kind === 'markdown'
@@ -60,7 +89,12 @@ export function MaterialsSection({
         }),
       })
       notify(result.deduplicated ? '内容已存在，已追加导入证据' : '素材已冻结')
-      setForm((value) => ({ ...value, title: '', content: '' }))
+      setForm((value) => ({
+        ...value,
+        title: '',
+        content: '',
+        originalFilename: '',
+      }))
       await reload()
     } catch (error) {
       notify(error instanceof Error ? error.message : '导入失败', true)
@@ -93,33 +127,115 @@ export function MaterialsSection({
               <p className="line-clamp-3 whitespace-pre-wrap text-sm leading-6 text-zinc-600 dark:text-zinc-300">
                 {material.content}
               </p>
+              {material.analysis && (
+                <div className="rounded-xl bg-zinc-50 p-3 text-xs dark:bg-zinc-950">
+                  <p className="line-clamp-2 leading-5 text-zinc-500 dark:text-zinc-400">
+                    {material.analysis.summary || '分析已完成'}
+                  </p>
+                  {!!material.analysis.tags?.length && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {material.analysis.tags.slice(0, 8).map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-white px-2 py-1 text-zinc-500 dark:bg-zinc-900"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {!!material.analysis.media?.length && (
+                    <p className="mt-2 text-zinc-400">
+                      图片归档：
+                      {
+                        material.analysis.media.filter(
+                          ({ status }) => status === 'archived',
+                        ).length
+                      }{' '}
+                      成功 /{' '}
+                      {
+                        material.analysis.media.filter(
+                          ({ status }) => status === 'failed',
+                        ).length
+                      }{' '}
+                      失败
+                    </p>
+                  )}
+                  {material.analysis.media
+                    ?.filter(({ status }) => status === 'failed')
+                    .slice(0, 2)
+                    .map((item) => (
+                      <p
+                        key={item.sourceUrl || item.source_url}
+                        className="mt-1 break-all text-red-600 dark:text-red-400"
+                      >
+                        {item.error}
+                      </p>
+                    ))}
+                </div>
+              )}
               <div className="flex items-center justify-between text-xs text-zinc-400">
                 <span>
                   {material.kind} · {material.byte_size} bytes
                 </span>
-                {material.status !== 'archived' && (
-                  <StudioButton
-                    tone="ghost"
-                    className="min-h-8 px-2 py-1 text-xs"
-                    onClick={async () => {
-                      try {
-                        await studioRequest(
-                          `/marlin/materials/${material.id}/archive`,
-                          { method: 'POST' },
-                        )
-                        notify('素材已归档，原始内容仍保留')
-                        await reload()
-                      } catch (error) {
-                        notify(
-                          error instanceof Error ? error.message : '归档失败',
-                          true,
-                        )
-                      }
-                    }}
-                  >
-                    归档
-                  </StudioButton>
-                )}
+                <div className="flex gap-1">
+                  {material.status !== 'archived' && (
+                    <>
+                      <StudioButton
+                        tone="ghost"
+                        className="min-h-8 px-2 py-1 text-xs"
+                        onClick={async () => {
+                          try {
+                            await studioRequest(
+                              `/marlin/materials/${material.id}/analyze`,
+                              {
+                                method: 'POST',
+                                body: studioJson({
+                                  force: false,
+                                  archive_images: true,
+                                }),
+                              },
+                            )
+                            notify('分析完成；图片归档结果已写入素材')
+                            await reload()
+                          } catch (error) {
+                            notify(
+                              error instanceof Error
+                                ? error.message
+                                : '分析失败',
+                              true,
+                            )
+                          }
+                        }}
+                      >
+                        {material.analysis ? '查看分析' : '分析'}
+                      </StudioButton>
+                      <StudioButton
+                        tone="ghost"
+                        className="min-h-8 px-2 py-1 text-xs"
+                        onClick={async () => {
+                          try {
+                            await studioRequest(
+                              `/marlin/materials/${material.id}/archive`,
+                              { method: 'POST' },
+                            )
+                            notify('素材已归档，原始内容仍保留')
+                            await reload()
+                          } catch (error) {
+                            notify(
+                              error instanceof Error
+                                ? error.message
+                                : '归档失败',
+                              true,
+                            )
+                          }
+                        }}
+                      >
+                        归档
+                      </StudioButton>
+                    </>
+                  )}
+                </div>
               </div>
             </StudioCard>
           ))
@@ -140,7 +256,7 @@ export function MaterialsSection({
               onChange={(event) =>
                 setForm({ ...form, title: event.target.value })
               }
-              required
+              required={form.kind !== 'url'}
             />
           </StudioLabel>
           <div className="grid grid-cols-2 gap-3">
@@ -173,25 +289,66 @@ export function MaterialsSection({
               </StudioSelect>
             </StudioLabel>
           </div>
+          <StudioLabel
+            label="本地文件"
+            hint="Markdown / JSON / HTML / TXT，最大 5MB"
+          >
+            <StudioInput
+              type="file"
+              accept=".md,.markdown,.json,.html,.htm,.txt,text/plain,text/markdown,text/html,application/json"
+              onChange={async (event) => {
+                const file = event.target.files?.[0]
+                if (!file) return
+                if (file.size > 5_000_000) {
+                  notify('文件超过 5MB，未读取', true)
+                  event.target.value = ''
+                  return
+                }
+                const extension = file.name.split('.').pop()?.toLowerCase()
+                const kind =
+                  extension === 'md' || extension === 'markdown'
+                    ? 'markdown'
+                    : extension === 'json'
+                      ? 'json'
+                      : extension === 'html' || extension === 'htm'
+                        ? 'html'
+                        : 'text'
+                setForm({
+                  ...form,
+                  title: form.title || file.name,
+                  kind,
+                  sourceType: 'upload',
+                  sourceRef: '',
+                  content: await file.text(),
+                  originalFilename: file.name,
+                })
+              }}
+            />
+          </StudioLabel>
           <StudioLabel label="来源地址" hint="可选">
             <StudioInput
               value={form.sourceRef}
               onChange={(event) =>
                 setForm({ ...form, sourceRef: event.target.value })
               }
-              placeholder="https://…"
-            />
-          </StudioLabel>
-          <StudioLabel label="原始内容">
-            <StudioTextArea
-              className="min-h-64 font-mono text-xs leading-6"
-              value={form.content}
-              onChange={(event) =>
-                setForm({ ...form, content: event.target.value })
+              placeholder={
+                form.kind === 'url' ? 'https://…（必填）' : 'https://…'
               }
-              required
+              required={form.kind === 'url'}
             />
           </StudioLabel>
+          {form.kind !== 'url' && (
+            <StudioLabel label="原始内容">
+              <StudioTextArea
+                className="min-h-64 font-mono text-xs leading-6"
+                value={form.content}
+                onChange={(event) =>
+                  setForm({ ...form, content: event.target.value })
+                }
+                required
+              />
+            </StudioLabel>
+          )}
           <StudioButton disabled={pending}>
             {pending ? '正在导入…' : '冻结并导入'}
           </StudioButton>

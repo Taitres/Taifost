@@ -7,6 +7,25 @@ export interface Material {
   content_hash: string
   byte_size: number
   created_at: string
+  analysis?: {
+    version: number
+    generatedAt?: string
+    generated_at?: string
+    summary?: string
+    categories?: string[]
+    tags?: string[]
+    fragments?: Array<{ index: number; text: string }>
+    publicCitations?: Array<{ url: string; host: string }>
+    public_citations?: Array<{ url: string; host: string }>
+    media?: Array<{
+      sourceUrl?: string
+      source_url?: string
+      archivedUrl?: string
+      archived_url?: string
+      status: 'archived' | 'failed' | 'pending'
+      error?: string
+    }>
+  } | null
 }
 
 export interface Category {
