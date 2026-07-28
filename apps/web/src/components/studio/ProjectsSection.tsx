@@ -58,6 +58,11 @@ export function ProjectsSection({
   })
   const [scheduledAt, setScheduledAt] = useState('')
   const [reviewerEmail, setReviewerEmail] = useState('')
+  const [rewritePending, setRewritePending] = useState(false)
+  const [rewriteSelection, setRewriteSelection] = useState({
+    start: 0,
+    end: 0,
+  })
 
   const loadProject = async (id = selectedId) => {
     if (!id) {
@@ -436,9 +441,73 @@ export function ProjectsSection({
                         content: event.target.value,
                       })
                     }
+                    onSelect={(event) =>
+                      setRewriteSelection({
+                        start: event.currentTarget.selectionStart,
+                        end: event.currentTarget.selectionEnd,
+                      })
+                    }
                     required
                   />
                 </StudioLabel>
+                <div className="flex flex-wrap items-center gap-3">
+                  <StudioButton
+                    type="button"
+                    tone="secondary"
+                    disabled={
+                      rewritePending ||
+                      rewriteSelection.end <= rewriteSelection.start
+                    }
+                    onClick={async () => {
+                      const { start, end } = rewriteSelection
+                      const selected = revisionForm.content.slice(start, end)
+                      if (!selected) return
+                      setRewritePending(true)
+                      try {
+                        const result = await studioRequest<{
+                          advice: string
+                        }>(`/marlin/ai/projects/${project.id}/advice`, {
+                          method: 'POST',
+                          body: studioJson({
+                            slot: 'quick-rewriter',
+                            instruction: [
+                              '改写下面选中的 Markdown 段落。',
+                              '保留事实、链接、代码和原意；提升中文表达的准确性与可读性。',
+                              'advice 字段只能放可直接替换原文的 Markdown，不要解释。',
+                              `选中内容：\n${selected}`,
+                            ].join('\n\n'),
+                          }),
+                        })
+                        setRevisionForm((value) => ({
+                          ...value,
+                          content:
+                            value.content.slice(0, start) +
+                            result.advice +
+                            value.content.slice(end),
+                        }))
+                        setRewriteSelection({
+                          start,
+                          end: start + result.advice.length,
+                        })
+                        notify('选中段落已由快速改写岗位替换')
+                      } catch (error) {
+                        notify(
+                          error instanceof Error
+                            ? error.message
+                            : 'AI 改写失败',
+                          true,
+                        )
+                      } finally {
+                        setRewritePending(false)
+                      }
+                    }}
+                  >
+                    {rewritePending ? '正在改写…' : 'AI 改写选中段落'}
+                  </StudioButton>
+                  <span className="text-xs text-zinc-400">
+                    仅替换当前选择；保存时仍会冻结为全新修订。
+                  </span>
+                </div>
                 <StudioButton>冻结为新修订</StudioButton>
               </form>
               {!!project.revisions?.length && (

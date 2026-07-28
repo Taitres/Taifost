@@ -20,6 +20,7 @@ const slots = [
   ['material-analyst', '素材分析'],
   ['topic-planner', '选题策划'],
   ['writer', '内容写作'],
+  ['quick-rewriter', '快速改写'],
   ['reviewer', '编辑审校'],
   ['fact-checker', '事实核验'],
   ['seo-editor', 'SEO 编辑'],

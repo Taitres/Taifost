@@ -343,7 +343,7 @@ function Overview({
     {
       label: 'AI 角色',
       value: data.roles.length,
-      detail: `共 6 个固定职责`,
+      detail: `共 7 个固定职责`,
       section: 'ai' as Section,
     },
   ]
