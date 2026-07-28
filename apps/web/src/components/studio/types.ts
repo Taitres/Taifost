@@ -28,6 +28,20 @@ export interface Material {
   } | null
 }
 
+export interface MediaAsset {
+  source_url: string
+  archived_url?: string
+  object_path?: string
+  content_hash?: string
+  mime_type?: string
+  byte_size?: number
+  status: 'archived' | 'failed' | 'pending' | 'ignored'
+  error?: string
+  usage: 'used' | 'unused' | 'unresolved'
+  materials: Array<{ id: string; title: string }>
+  used_by: Array<{ id: string; title: string; type: 'post' | 'page' }>
+}
+
 export interface Category {
   id: string
   name: string

@@ -12,6 +12,7 @@ import {
 import { AiSection } from './AiSection'
 import { HotspotsSection } from './HotspotsSection'
 import { MaterialsSection } from './MaterialsSection'
+import { MediaSection } from './MediaSection'
 import { PagesSection } from './PagesSection'
 import { StatusPill, StudioButton, StudioCard } from './primitives'
 import { ProjectsSection } from './ProjectsSection'
@@ -24,12 +25,14 @@ import type {
   HotspotSource,
   HotspotTheme,
   Material,
+  MediaAsset,
   Project,
 } from './types'
 
 type Section =
   | 'overview'
   | 'materials'
+  | 'media'
   | 'hotspots'
   | 'projects'
   | 'pages'
@@ -43,6 +46,7 @@ const navigation: Array<{
 }> = [
   { id: 'overview', label: '总览', description: '今日状态', icon: '⌁' },
   { id: 'materials', label: '素材库', description: '冻结与证据', icon: '◫' },
+  { id: 'media', label: '媒体库', description: '归档与引用', icon: '▧' },
   { id: 'hotspots', label: '热点雷达', description: '采集与筛选', icon: '⌖' },
   { id: 'projects', label: '创作项目', description: '修订与发布', icon: '✎' },
   { id: 'pages', label: '独立页面', description: '跳过审阅', icon: '▤' },
@@ -51,6 +55,7 @@ const navigation: Array<{
 
 interface StudioData {
   materials: Material[]
+  media: MediaAsset[]
   projects: Project[]
   themes: HotspotTheme[]
   sources: HotspotSource[]
@@ -62,6 +67,7 @@ interface StudioData {
 
 const emptyData: StudioData = {
   materials: [],
+  media: [],
   projects: [],
   themes: [],
   sources: [],
@@ -91,6 +97,7 @@ export function StudioApp() {
     try {
       const [
         materials,
+        media,
         projects,
         themes,
         sources,
@@ -100,6 +107,7 @@ export function StudioApp() {
         pages,
       ] = await Promise.all([
         studioRequest<Material[]>('/marlin/materials?page=1&size=100'),
+        studioRequest<MediaAsset[]>('/marlin/materials/media'),
         studioRequest<Project[]>('/marlin/projects?page=1&size=100'),
         studioRequest<HotspotTheme[]>('/marlin/hotspots/themes'),
         studioRequest<HotspotSource[]>('/marlin/hotspots/sources'),
@@ -112,6 +120,7 @@ export function StudioApp() {
       ])
       setData({
         materials,
+        media,
         projects,
         themes,
         sources,
@@ -254,6 +263,7 @@ export function StudioApp() {
               notify={notify}
             />
           )}
+          {section === 'media' && <MediaSection media={data.media} />}
           {section === 'hotspots' && (
             <HotspotsSection
               themes={data.themes}
