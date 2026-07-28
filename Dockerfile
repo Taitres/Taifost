@@ -1,10 +1,13 @@
-FROM node:22 AS base
+FROM node:22-bookworm-slim AS base
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable
 
 FROM base AS deps
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates git g++ make python3 \
+  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=marlin-shiro-pnpm,target=/pnpm/store \
