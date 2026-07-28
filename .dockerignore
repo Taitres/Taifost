@@ -3,6 +3,10 @@ node_modules/
 
 # next.js build output
 .next
+**/.next
+
+# repository metadata
+.git
 
 # typescript build output
 dist
