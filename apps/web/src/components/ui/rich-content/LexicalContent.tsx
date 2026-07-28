@@ -15,8 +15,8 @@ import {
   LinkCardFetchProvider,
   LinkCardRenderer,
   PresentDialogProvider,
+  ShiroRenderer,
 } from '@haklex/rich-kit-shiro'
-import { ShiroRenderer } from '@haklex/rich-kit-shiro/renderer'
 import clsx from 'clsx'
 import type { SerializedEditorState } from 'lexical'
 import { useCallback, useMemo } from 'react'

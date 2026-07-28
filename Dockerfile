@@ -4,21 +4,21 @@ ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable
 
-FROM base AS deps
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates git g++ make python3 \
-  && rm -rf /var/lib/apt/lists/*
+FROM base AS builder
+RUN --mount=type=cache,id=marlin-shiro-apt,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,id=marlin-shiro-apt-lists,target=/var/lib/apt/lists,sharing=locked \
+  apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates git g++ make python3
 WORKDIR /app
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/web/package.json ./apps/web/package.json
+COPY packages/types/package.json ./packages/types/package.json
+COPY patches ./patches
 RUN --mount=type=cache,id=marlin-shiro-pnpm,target=/pnpm/store \
   pnpm config set store-dir /pnpm/store && pnpm fetch --frozen-lockfile
-COPY . .
 RUN --mount=type=cache,id=marlin-shiro-pnpm,target=/pnpm/store \
-  pnpm install --offline --frozen-lockfile
-
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app .
+  CI=true pnpm install --offline --frozen-lockfile
+COPY . .
 
 ARG NEXT_PUBLIC_API_URL=/api/v3
 ARG NEXT_PUBLIC_GATEWAY_URL=
@@ -35,10 +35,11 @@ ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
 ENV PORT=2323
 
-RUN apt-get update \
+RUN --mount=type=cache,id=marlin-shiro-apt,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,id=marlin-shiro-apt-lists,target=/var/lib/apt/lists,sharing=locked \
+  apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates curl fontconfig fonts-noto-cjk \
-  && fc-cache -f \
-  && rm -rf /var/lib/apt/lists/*
+  && fc-cache -f
 
 COPY --from=builder /app/apps/web/public ./apps/web/public
 COPY --from=builder /app/apps/web/.next/standalone ./
