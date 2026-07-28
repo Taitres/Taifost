@@ -21,6 +21,10 @@
       "eslint --fix"
     ]
   },
+  "dependencies": {
+    "lightningcss": "1.31.1",
+    "lightningcss-linux-x64-gnu": "^1.33.0"
+  },
   "devDependencies": {
     "@types/node": "25.0.10",
     "bumpp": "^10.4.1",
