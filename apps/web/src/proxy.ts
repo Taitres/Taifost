@@ -83,6 +83,7 @@ const shouldSkipIntl = (pathname: string) => {
   return (
     pathname.startsWith('/api') ||
     pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/studio') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/_vercel') ||
     pathname.startsWith('/feed') ||
