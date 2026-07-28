@@ -19,8 +19,9 @@ import type { Category, Material, Project } from './types'
 
 interface ReviewCredential {
   id: string
-  passcode: string
+  passcode: string | null
   review_path: string
+  passcode_configured?: boolean
   email_delivery?: {
     status: 'not_requested' | 'sent' | 'failed'
     to?: string
@@ -485,8 +486,9 @@ export function ProjectsSection({
                     try {
                       const result = await studioRequest<{
                         request: { id: string }
-                        passcode: string
+                        passcode: string | null
                         review_path: string
+                        passcode_configured?: boolean
                         email_delivery?: ReviewCredential['email_delivery']
                       }>(`/marlin/projects/${project.id}/reviews`, {
                         method: 'POST',
@@ -499,6 +501,7 @@ export function ProjectsSection({
                         id: result.request.id,
                         passcode: result.passcode,
                         review_path: result.review_path,
+                        passcode_configured: result.passcode_configured,
                         email_delivery: result.email_delivery,
                       })
                       await afterMutation(
@@ -524,9 +527,15 @@ export function ProjectsSection({
                   <p className="text-xs font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">
                     口令仅显示一次
                   </p>
-                  <p className="mt-2 font-mono text-3xl font-black tracking-[0.3em]">
-                    {credential.passcode}
-                  </p>
+                  {credential.passcode ? (
+                    <p className="mt-2 font-mono text-3xl font-black tracking-[0.3em]">
+                      {credential.passcode}
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-sm font-semibold">
+                      使用服务器预设的长期审批口令；邮件中不会包含口令。
+                    </p>
+                  )}
                   {credential.email_delivery?.status === 'sent' && (
                     <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-300">
                       已发送至 {credential.email_delivery.to}
@@ -543,9 +552,15 @@ export function ProjectsSection({
                       onClick={() => {
                         const url = `${window.location.origin}/studio/review/${credential.id}`
                         void navigator.clipboard.writeText(
-                          `${url}\n口令：${credential.passcode}`,
+                          credential.passcode
+                            ? `${url}\n口令：${credential.passcode}`
+                            : url,
                         )
-                        notify('审阅链接和口令已复制')
+                        notify(
+                          credential.passcode
+                            ? '审阅链接和口令已复制'
+                            : '审阅链接已复制（口令需另行告知）',
+                        )
                       }}
                     >
                       复制审阅信息
