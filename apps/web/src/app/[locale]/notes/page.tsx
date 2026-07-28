@@ -71,7 +71,7 @@ export default definePrerenderPage<{ locale: Locale }>()({
                   </time>
                   <a
                     href={buildNoteHref(note)}
-                    className="cyber-link--underline min-w-0 truncate"
+                    className="shiro-link--underline min-w-0 truncate"
                   >
                     {note.title}
                   </a>

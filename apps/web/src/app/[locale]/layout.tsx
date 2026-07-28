@@ -56,12 +56,8 @@ export const generateMetadata = async ({
   const { locale } = await params
   const fetchedData = await fetchAggregationData()
 
-  const {
-    seo,
-    url,
-    user,
-    theme: { config },
-  } = fetchedData
+  const { seo, url, user, theme } = fetchedData
+  const config = theme?.config
 
   const webUrl = url?.webUrl || ''
 
@@ -201,7 +197,7 @@ export default async function LocaleLayout({ children, params }: Props) {
       .join('; '),
   )
 
-  headers.append('user-agent', 'Cyber')
+  headers.append('user-agent', `Shiro/${version}`)
 
   const userAuth = await fetch(
     apiClient.proxy('owner')('check_logged').toString(true),
@@ -281,7 +277,7 @@ const SayHi = () => (
         'margin: 1em 0; padding: 5px 0; background: #efefef;',
       )
       console.info(
-        `%c Cyber ${window.version} %c https://github.com/At87668/Cyber`,
+        `%c Shiro ${window.version} %c https://github.com/Innei/Shiro`,
         'color: #fff; margin: 1em 0; padding: 5px 0; background: #39C5BB;',
         'margin: 1em 0; padding: 5px 0; background: #efefef;',
       )

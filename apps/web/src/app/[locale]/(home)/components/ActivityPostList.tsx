@@ -33,7 +33,7 @@ export const ActivityPostList = () => {
       <h2 className="text-2xl font-medium leading-loose">
         {t('recent_posts')}
       </h2>
-      <ul className="cyber-timeline mt-4">
+      <ul className="shiro-timeline mt-4">
         {posts.map((post) => (
           <li key={post.id} className="flex min-w-0 justify-between">
             <Link
@@ -70,7 +70,7 @@ export const ActivityPostList = () => {
       <h2 className="text-2xl font-medium leading-loose">
         {t('recent_notes')}
       </h2>
-      <ul className="cyber-timeline mt-4">
+      <ul className="shiro-timeline mt-4">
         {notes.map((note) => (
           <li key={note.id} className="flex min-w-0 justify-between">
             <Link
