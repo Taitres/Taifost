@@ -101,6 +101,14 @@
 
 @custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
 
+.font-shiro-sans {
+  --app-font-sans: 'Manrope';
+}
+
+.font-shiro-serif {
+  --app-font-serif: 'Noto Serif SC';
+}
+
 html {
   font-size: 14px;
   line-height: 1.5;

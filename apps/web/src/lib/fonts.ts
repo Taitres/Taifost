@@ -1,19 +1,10 @@
-import { Manrope, Noto_Serif_SC } from 'next/font/google'
-
-const sansFont = Manrope({
-  subsets: ['latin'],
-  weight: ['300', '400', '500'],
-  variable: '--app-font-sans',
-  display: 'swap',
-})
-
-const serifFont = Noto_Serif_SC({
-  subsets: ['latin'],
-  weight: ['400'],
-  variable: '--app-font-serif',
-  display: 'swap',
-  // adjustFontFallback: false,
-  fallback: ['Noto Serif SC'],
-})
+/**
+ * Keep the public font variables stable without making production builds
+ * depend on Google Fonts being reachable. Visitors still get Manrope/Noto
+ * Serif SC when those fonts are installed, followed by the existing
+ * platform-font fallbacks from tailwindcss.css.
+ */
+const sansFont = { variable: 'font-shiro-sans' } as const
+const serifFont = { variable: 'font-shiro-serif' } as const
 
 export { sansFont, serifFont }
