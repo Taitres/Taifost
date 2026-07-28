@@ -246,7 +246,10 @@ export function ProjectsSection({
                         className="mt-1"
                         type="checkbox"
                         checked={selectedMaterials.includes(material.id)}
-                        disabled={attachedIds.has(material.id)}
+                        disabled={
+                          attachedIds.has(material.id) ||
+                          material.status === 'pending'
+                        }
                         onChange={(event) =>
                           setSelectedMaterials((ids) =>
                             event.target.checked
@@ -262,7 +265,9 @@ export function ProjectsSection({
                         <span className="text-xs text-zinc-400">
                           {attachedIds.has(material.id)
                             ? '已关联并冻结'
-                            : material.kind}
+                            : material.status === 'pending'
+                              ? '图片待处理，暂不可关联'
+                              : material.kind}
                         </span>
                       </span>
                     </label>

@@ -158,7 +158,13 @@ export function MaterialsSection({
                           ({ status }) => status === 'failed',
                         ).length
                       }{' '}
-                      失败
+                      失败 /{' '}
+                      {
+                        material.analysis.media.filter(
+                          ({ status }) => status === 'ignored',
+                        ).length
+                      }{' '}
+                      已忽略
                     </p>
                   )}
                   {material.analysis.media
@@ -208,8 +214,44 @@ export function MaterialsSection({
                           }
                         }}
                       >
-                        {material.analysis ? '查看分析' : '分析'}
+                        {material.status === 'pending'
+                          ? '重试图片并分析'
+                          : material.analysis
+                            ? '查看分析'
+                            : '分析'}
                       </StudioButton>
+                      {material.status === 'pending' && (
+                        <StudioButton
+                          tone="ghost"
+                          className="min-h-8 px-2 py-1 text-xs text-amber-700 dark:text-amber-300"
+                          onClick={async () => {
+                            try {
+                              await studioRequest(
+                                `/marlin/materials/${material.id}/analyze`,
+                                {
+                                  method: 'POST',
+                                  body: studioJson({
+                                    force: true,
+                                    archive_images: false,
+                                    ignore_failed_images: true,
+                                  }),
+                                },
+                              )
+                              notify('已明确忽略远程图片，素材可进入创作')
+                              await reload()
+                            } catch (error) {
+                              notify(
+                                error instanceof Error
+                                  ? error.message
+                                  : '忽略失败',
+                                true,
+                              )
+                            }
+                          }}
+                        >
+                          忽略图片并继续
+                        </StudioButton>
+                      )}
                       <StudioButton
                         tone="ghost"
                         className="min-h-8 px-2 py-1 text-xs"

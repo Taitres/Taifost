@@ -22,7 +22,7 @@ export interface Material {
       source_url?: string
       archivedUrl?: string
       archived_url?: string
-      status: 'archived' | 'failed' | 'pending'
+      status: 'archived' | 'failed' | 'pending' | 'ignored'
       error?: string
     }>
   } | null
