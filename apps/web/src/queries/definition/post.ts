@@ -30,7 +30,13 @@ export const post = {
           prefer: 'lexical',
         })
 
-        return data as PostWithTranslation
+        return {
+          ...data,
+          count: {
+            read: data.count?.read ?? 0,
+            like: data.count?.like ?? 0,
+          },
+        } as PostWithTranslation
       },
     }),
 }

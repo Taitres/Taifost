@@ -89,7 +89,7 @@ const LikeButton = () => {
   const [update] = useForceUpdate()
 
   const id = useCurrentPostDataSelector((data) => data?.id)
-  const likeCount = useCurrentPostDataSelector((data) => data?.count.like)
+  const likeCount = useCurrentPostDataSelector((data) => data?.count?.like ?? 0)
 
   if (!id) return null
   const handleLike = () => {
@@ -98,6 +98,7 @@ const LikeButton = () => {
     apiClient.activity.likeIt('Post', id).then(() => {
       setLikeId(id)
       setGlobalCurrentPostData((draft) => {
+        draft.count ??= { read: 0, like: 0 }
         draft.count.like += 1
       })
       update()

@@ -82,7 +82,9 @@ const LikeButton = () => {
   const control = useAnimationControls()
   const [update] = useForceUpdate()
 
-  const likeCount = useCurrentNoteDataSelector((data) => data?.data.count.like)
+  const likeCount = useCurrentNoteDataSelector(
+    (data) => data?.data.count?.like ?? 0,
+  )
   const id = useCurrentNoteDataSelector((data) => data?.data.id)
   const nid = useCurrentNoteNid()
 
@@ -94,6 +96,7 @@ const LikeButton = () => {
     apiClient.activity.likeIt('Note', id).then(() => {
       setLikeId(id)
       setCurrentNoteData((draft) => {
+        draft.data.count ??= { read: 0, like: 0 }
         draft.data.count.like += 1
       })
       update()

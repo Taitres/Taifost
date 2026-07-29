@@ -85,6 +85,13 @@ function parseNotePath(
  */
 function ensureNoteWrappedEnvelope(raw: any): any {
   if (!raw) return { data: raw as unknown as NoteModel }
+  const withCount = (note: Record<string, any>) => ({
+    ...note,
+    count: {
+      read: note.count?.read ?? 0,
+      like: note.count?.like ?? 0,
+    },
+  })
   // Already wrapped — `data` is a NoteModel (has `id` / `nid`).
   if (
     typeof raw === 'object' &&
@@ -92,7 +99,10 @@ function ensureNoteWrappedEnvelope(raw: any): any {
     typeof raw.data === 'object' &&
     (raw.data as any).id !== undefined
   ) {
-    return raw as NoteWrappedWithLikedAndTranslationPayload
+    return {
+      ...raw,
+      data: withCount(raw.data),
+    } as NoteWrappedWithLikedAndTranslationPayload
   }
   // Bare NoteModel (returned by `apiClient.note.getNoteBy*`) — wrap it as the
   // `data` field of the envelope and lift top-level siblings (`next`, `prev`,
@@ -101,7 +111,7 @@ function ensureNoteWrappedEnvelope(raw: any): any {
   // touching every call site.
   const { next, prev, ...noteModel } = (raw ?? {}) as Record<string, any>
   return {
-    data: noteModel,
+    data: withCount(noteModel),
     next: next ?? null,
     prev: prev ?? null,
   }

@@ -19,6 +19,7 @@ export const articleReadCountUpdateHandler: EventHandler = (data) => {
       const currentData = getGlobalCurrentPostData()
       if (currentData?.id === id) {
         setGlobalCurrentPostData((draft) => {
+          draft.count ??= { read: 0, like: 0 }
           draft.count.read = count
         })
       }
@@ -28,6 +29,7 @@ export const articleReadCountUpdateHandler: EventHandler = (data) => {
       const currentData = getCurrentNoteData()?.data
       if (currentData?.id === id) {
         setCurrentNoteData((draft) => {
+          draft.data.count ??= { read: 0, like: 0 }
           draft.data.count.read = count
         })
       }
