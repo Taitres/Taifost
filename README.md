@@ -1,5 +1,8 @@
 # Shiro
 
+> [!NOTE]
+> **Taifost** 是基于 [Innei/Shiro](https://github.com/Innei/Shiro) 独立维护并进行深度改造的分支，现已适配 MX Space Core v3，并服务于 MARLIN.LOG。由于产品方向和实现将与上游产生较大差异，本项目以独立仓库发布，而非加入 GitHub fork network。
+
 > [!IMPORTANT]
 > **Shiro 已进入维护模式，将停留在当前版本，不再添加新功能，仅修复关键 Bug。**
 >
