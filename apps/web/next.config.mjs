@@ -48,10 +48,10 @@ let nextConfig = {
     // optimizePackageImports: ['dayjs'],
   },
   images: {
-    unoptimized:
-      // Squoosh has memory leak issue, but it will remove in next.js 14.3.0
-      // !process.env.VERCEL && isProd && eval('!process.env.NEXT_SHARP_PATH'),
-      process.env.NODE_ENV !== 'production',
+    // Public domains resolve through a fake-IP proxy range on this host.
+    // Load remote media in the browser instead of allowing the optimizer to
+    // fetch addresses that appear private to the server.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
