@@ -29,7 +29,15 @@ export const OwnerStatus = () => {
   const pageIsActive = usePageIsActive()
   const { data: statusFromRequest, isLoading: statusLoading } = useQuery({
     queryKey: ['shiro-status'],
-    queryFn: () => apiClient.proxy.fn.shiro.status.get<TOwnerStatus | null>(),
+    queryFn: async () => {
+      try {
+        return await apiClient.proxy.fn.shiro.status.get<TOwnerStatus | null>()
+      } catch {
+        // The owner status is an optional user-provided serverless function.
+        // Core v3 returns FUNCTION_NOT_FOUND when it has not been installed.
+        return null
+      }
+    },
     refetchOnWindowFocus: 'always',
     refetchOnMount: 'always',
     enabled: pageIsActive,

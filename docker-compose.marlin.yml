@@ -6,14 +6,14 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${CORE_API_URL:-http://127.0.0.1:2334/api/v3}
-        NEXT_PUBLIC_GATEWAY_URL: ${CORE_GATEWAY_URL:-http://127.0.0.1:2334}
+        NEXT_PUBLIC_GATEWAY_URL: ${CORE_GATEWAY_URL:-https://api.taitres.com}
     container_name: marlin-shiro-v3
     restart: unless-stopped
     ports:
       - '${SHIRO_PORT:-2324}:2323'
     environment:
       NEXT_PUBLIC_API_URL: ${CORE_API_URL:-http://host.docker.internal:2334/api/v3}
-      NEXT_PUBLIC_GATEWAY_URL: ${CORE_GATEWAY_URL:-http://host.docker.internal:2334}
-      NEXT_PUBLIC_CLIENT_API_URL: ${CORE_CLIENT_API_URL:-http://127.0.0.1:2334/api/v3}
+      NEXT_PUBLIC_GATEWAY_URL: ${CORE_GATEWAY_URL:-https://api.taitres.com}
+      NEXT_PUBLIC_CLIENT_API_URL: ${CORE_CLIENT_API_URL:-https://api.taitres.com/api/v3}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
