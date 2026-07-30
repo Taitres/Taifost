@@ -3,6 +3,7 @@
 import type { FormEvent } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 
+import { Markdown } from '~/components/ui/markdown'
 import { zonedLocalDateTimeToIso } from '~/lib/site-timezone'
 import { studioJson, studioRequest } from '~/lib/studio-api'
 
@@ -16,7 +17,7 @@ import {
   StudioSelect,
   StudioTextArea,
 } from './primitives'
-import type { Category, Material, Project } from './types'
+import type { Category, Material, Project, Revision } from './types'
 
 interface ReviewCredential {
   id: string
@@ -28,6 +29,47 @@ interface ReviewCredential {
     to?: string
     error?: string
   }
+}
+
+interface RevisionDraft {
+  form: {
+    title: string
+    slug: string
+    summary: string
+    content: string
+    categoryId: string
+    tags: string
+  }
+  savedAt: string
+}
+
+const draftKey = (projectId: string) =>
+  `marlin:studio:revision-draft:${projectId}`
+
+const exportRevision = (revision: Revision) => {
+  const frontmatter = [
+    '---',
+    `title: ${JSON.stringify(revision.title)}`,
+    `slug: ${JSON.stringify(revision.slug)}`,
+    `summary: ${JSON.stringify(revision.summary || '')}`,
+    `category_id: ${JSON.stringify(revision.category_id)}`,
+    `tags: ${JSON.stringify(revision.tags)}`,
+    `revision: ${revision.version}`,
+    `created_at: ${JSON.stringify(revision.created_at)}`,
+    '---',
+    '',
+  ].join('\n')
+  const blob = new Blob([frontmatter, revision.content], {
+    type: 'text/markdown;charset=utf-8',
+  })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${revision.slug || `revision-${revision.version}`}.md`
+  document.body.append(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1_000)
 }
 
 export function ProjectsSection({
@@ -62,6 +104,11 @@ export function ProjectsSection({
   const [scheduledAt, setScheduledAt] = useState('')
   const [reviewerEmail, setReviewerEmail] = useState('')
   const [rewritePending, setRewritePending] = useState(false)
+  const [editorMode, setEditorMode] = useState<'edit' | 'split' | 'preview'>(
+    'split',
+  )
+  const [draftProjectId, setDraftProjectId] = useState('')
+  const [draftSavedAt, setDraftSavedAt] = useState<string>()
   const [rewriteSelection, setRewriteSelection] = useState({
     start: 0,
     end: 0,
@@ -92,6 +139,55 @@ export function ProjectsSection({
     void loadProject(selectedId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId])
+
+  useEffect(() => {
+    if (!selectedId) {
+      setDraftProjectId('')
+      setDraftSavedAt(undefined)
+      return
+    }
+    try {
+      const raw = window.localStorage.getItem(draftKey(selectedId))
+      const draft = raw ? (JSON.parse(raw) as RevisionDraft) : null
+      setRevisionForm(
+        draft?.form ?? {
+          title: '',
+          slug: '',
+          summary: '',
+          content: '',
+          categoryId: '',
+          tags: '',
+        },
+      )
+      setDraftSavedAt(draft?.savedAt)
+    } catch {
+      window.localStorage.removeItem(draftKey(selectedId))
+      setDraftSavedAt(undefined)
+    } finally {
+      setDraftProjectId(selectedId)
+    }
+  }, [selectedId])
+
+  useEffect(() => {
+    if (!selectedId || draftProjectId !== selectedId) return
+    const timer = window.setTimeout(() => {
+      const hasContent = Object.entries(revisionForm).some(
+        ([key, value]) => key !== 'categoryId' && Boolean(value.trim()),
+      )
+      if (!hasContent) {
+        window.localStorage.removeItem(draftKey(selectedId))
+        setDraftSavedAt(undefined)
+        return
+      }
+      const savedAt = new Date().toISOString()
+      window.localStorage.setItem(
+        draftKey(selectedId),
+        JSON.stringify({ form: revisionForm, savedAt } satisfies RevisionDraft),
+      )
+      setDraftSavedAt(savedAt)
+    }, 600)
+    return () => window.clearTimeout(timer)
+  }, [draftProjectId, revisionForm, selectedId])
 
   useEffect(() => {
     if (!revisionForm.categoryId && categories[0]) {
@@ -353,6 +449,8 @@ export function ProjectsSection({
                       content: '',
                       tags: '',
                     }))
+                    window.localStorage.removeItem(draftKey(project.id))
+                    setDraftSavedAt(undefined)
                     await afterMutation('新修订已冻结')
                   } catch (error) {
                     notify(
@@ -434,25 +532,85 @@ export function ProjectsSection({
                     />
                   </StudioLabel>
                 </div>
-                <StudioLabel label="Markdown 正文">
-                  <StudioTextArea
-                    className="min-h-[420px] font-mono text-sm leading-7"
-                    value={revisionForm.content}
-                    onChange={(event) =>
-                      setRevisionForm({
-                        ...revisionForm,
-                        content: event.target.value,
-                      })
-                    }
-                    onSelect={(event) =>
-                      setRewriteSelection({
-                        start: event.currentTarget.selectionStart,
-                        end: event.currentTarget.selectionEnd,
-                      })
-                    }
-                    required
-                  />
-                </StudioLabel>
+                <div className="grid gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
+                        Markdown 正文
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-400">
+                        {draftSavedAt
+                          ? `工作副本已自动保存：${new Date(
+                              draftSavedAt,
+                            ).toLocaleTimeString('zh-CN')}`
+                          : '工作副本会在当前浏览器自动保存'}
+                      </p>
+                    </div>
+                    <div className="flex rounded-xl bg-zinc-100 p-1 dark:bg-zinc-950">
+                      {(
+                        [
+                          ['edit', '源码'],
+                          ['split', '分栏'],
+                          ['preview', '预览'],
+                        ] as const
+                      ).map(([mode, label]) => (
+                        <StudioButton
+                          key={mode}
+                          type="button"
+                          tone="ghost"
+                          className={`min-h-8 px-3 py-1 text-xs ${
+                            editorMode === mode
+                              ? 'bg-white shadow-sm dark:bg-zinc-800'
+                              : ''
+                          }`}
+                          onClick={() => setEditorMode(mode)}
+                        >
+                          {label}
+                        </StudioButton>
+                      ))}
+                    </div>
+                  </div>
+                  <div
+                    className={`grid gap-3 ${
+                      editorMode === 'split' ? 'lg:grid-cols-2' : ''
+                    }`}
+                  >
+                    {editorMode !== 'preview' && (
+                      <StudioTextArea
+                        aria-label="Markdown 正文"
+                        className="min-h-[480px] font-mono text-sm leading-7"
+                        value={revisionForm.content}
+                        onChange={(event) =>
+                          setRevisionForm({
+                            ...revisionForm,
+                            content: event.target.value,
+                          })
+                        }
+                        onSelect={(event) =>
+                          setRewriteSelection({
+                            start: event.currentTarget.selectionStart,
+                            end: event.currentTarget.selectionEnd,
+                          })
+                        }
+                        required
+                      />
+                    )}
+                    {editorMode !== 'edit' && (
+                      <div className="min-h-[480px] min-w-0 overflow-hidden rounded-xl border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-700 dark:bg-zinc-950">
+                        {revisionForm.content ? (
+                          <Markdown
+                            value={revisionForm.content}
+                            className="min-w-0 overflow-hidden"
+                          />
+                        ) : (
+                          <p className="text-sm text-zinc-400">
+                            输入 Markdown 后在此显示与公开站一致的安全预览。
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <StudioButton
                     type="button"
@@ -517,7 +675,7 @@ export function ProjectsSection({
                 <div className="mt-6 grid gap-2 border-t border-zinc-100 pt-5 dark:border-zinc-800">
                   {project.revisions.map((revision) => (
                     <div
-                      className="flex items-center justify-between rounded-xl bg-zinc-50 px-4 py-3 dark:bg-zinc-950"
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-zinc-50 px-4 py-3 dark:bg-zinc-950"
                       key={revision.id}
                     >
                       <div>
@@ -528,9 +686,40 @@ export function ProjectsSection({
                           {revision.id}
                         </p>
                       </div>
-                      {revision.id === project.approved_revision_id && (
-                        <StatusPill value="approved" />
-                      )}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {revision.id === project.approved_revision_id && (
+                          <StatusPill value="approved" />
+                        )}
+                        <StudioButton
+                          type="button"
+                          tone="ghost"
+                          className="min-h-8 px-2 py-1 text-xs"
+                          onClick={() => {
+                            setRevisionForm({
+                              title: revision.title,
+                              slug: revision.slug,
+                              summary: revision.summary || '',
+                              content: revision.content,
+                              categoryId: revision.category_id,
+                              tags: revision.tags.join(', '),
+                            })
+                            setEditorMode('split')
+                            notify(
+                              `已将 v${revision.version} 载入工作副本；保存会产生新修订`,
+                            )
+                          }}
+                        >
+                          载入副本
+                        </StudioButton>
+                        <StudioButton
+                          type="button"
+                          tone="ghost"
+                          className="min-h-8 px-2 py-1 text-xs"
+                          onClick={() => exportRevision(revision)}
+                        >
+                          导出 .md
+                        </StudioButton>
+                      </div>
                     </div>
                   ))}
                 </div>
