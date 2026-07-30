@@ -5,6 +5,7 @@ import type { JSX } from 'react'
 export const HeaderActionButton = ({
   ref,
   children,
+  'aria-label': ariaLabel,
   ...rest
 }: JSX.IntrinsicElements['div'] & {
   ref?: React.RefObject<HTMLDivElement | null>
@@ -22,7 +23,7 @@ export const HeaderActionButton = ({
       )}
       {...rest}
       ref={ref}
-      aria-label={t('aria_header_action')}
+      aria-label={ariaLabel ?? t('aria_header_action')}
     >
       {children}
     </div>

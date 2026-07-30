@@ -11,33 +11,38 @@ import {
 } from '~/lib/datetime'
 
 const PROGRESS_DURATION = 2
+const REFRESH_INTERVAL = 1000
 export const TimelineProgress = () => {
   const [percentOfYear, setPercentYear] = useState(0)
   const [percentOfDay, setPercentDay] = useState(0)
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
-  const [currentDay, setCurrentDay] = useState(dayOfYear())
+  // Stable placeholders prevent the server timezone and browser timezone from
+  // producing different markup during hydration.
+  const [currentYear, setCurrentYear] = useState(0)
+  const [currentDay, setCurrentDay] = useState(0)
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const updateCurrentDate = () => {
       const year = new Date().getFullYear()
       const day = dayOfYear()
       setCurrentDay(day)
       setCurrentYear(year)
-    }, PROGRESS_DURATION)
+    }
+    updateCurrentDate()
+    const timer = setInterval(() => {
+      updateCurrentDate()
+    }, REFRESH_INTERVAL)
     return () => clearInterval(timer)
   }, [])
 
-  function updatePercent() {
-    const nowY = (dayOfYear() / daysOfYear(new Date().getFullYear())) * 100
-    const nowD = (secondOfDay() / secondOfDays) * 100
-    if (nowY !== percentOfYear) {
-      setPercentYear(nowY)
-    }
-    setPercentDay(nowD)
-  }
   useEffect(() => {
+    const updatePercent = () => {
+      const nowY = (dayOfYear() / daysOfYear(new Date().getFullYear())) * 100
+      const nowD = (secondOfDay() / secondOfDays) * 100
+      setPercentYear(nowY)
+      setPercentDay(nowD)
+    }
     updatePercent()
-    let timer = setInterval(updatePercent, PROGRESS_DURATION)
+    let timer = setInterval(updatePercent, REFRESH_INTERVAL)
     return () => {
       // @ts-ignore
       timer = clearInterval(timer)

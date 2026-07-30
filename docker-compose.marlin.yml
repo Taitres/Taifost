@@ -15,5 +15,6 @@ services:
       NEXT_PUBLIC_API_URL: ${CORE_API_URL:-http://host.docker.internal:2334/api/v3}
       NEXT_PUBLIC_GATEWAY_URL: ${CORE_GATEWAY_URL:-https://api.taitres.com}
       NEXT_PUBLIC_CLIENT_API_URL: ${CORE_CLIENT_API_URL:-https://api.taitres.com/api/v3}
+      NEXT_PUBLIC_SHIRO_STATUS_ENABLED: ${SHIRO_STATUS_ENABLED:-false}
     extra_hosts:
       - 'host.docker.internal:host-gateway'

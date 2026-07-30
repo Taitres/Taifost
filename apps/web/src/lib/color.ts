@@ -2,13 +2,12 @@ const getRandomColor = (
   lightness: [number, number],
   saturation: [number, number],
   hue: number,
+  seed: number,
 ) => {
-  const satAccent = Math.floor(
-    Math.random() * (saturation[1] - saturation[0] + 1) + saturation[0],
-  )
-  const lightAccent = Math.floor(
-    Math.random() * (lightness[1] - lightness[0] + 1) + lightness[0],
-  )
+  const saturationSpan = saturation[1] - saturation[0] + 1
+  const lightnessSpan = lightness[1] - lightness[0] + 1
+  const satAccent = saturation[0] + (Math.abs(seed) % saturationSpan)
+  const lightAccent = lightness[0] + (Math.abs(seed * 31 + hue) % lightnessSpan)
 
   // Generate the background color by increasing the lightness and decreasing the saturation
   const satBackground = satAccent > 30 ? satAccent - 30 : 0
@@ -22,22 +21,29 @@ const getRandomColor = (
 
 export function stringToHue(str: string) {
   let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+  for (const character of str) {
+    hash = (character.codePointAt(0) ?? 0) + ((hash << 5) - hash)
   }
   const hue = hash % 360
   return hue < 0 ? hue + 360 : hue
 }
 
-export const getColorScheme = (hue?: number) => {
-  const baseHue = hue ?? Math.floor(Math.random() * 361)
+export const getColorScheme = (hue = 0) => {
+  // Avatar colors participate in SSR. Derive every channel from the stable
+  // hue so the server and browser produce byte-identical style attributes.
+  const baseHue = hue
   const complementaryHue = (baseHue + 180) % 360
 
   // For light theme, we limit the lightness between 40 and 70 to avoid too bright colors for accent
-  const lightColors = getRandomColor([40, 70], [70, 90], baseHue)
+  const lightColors = getRandomColor([40, 70], [70, 90], baseHue, baseHue)
 
   // For dark theme, we limit the lightness between 20 and 50 to avoid too dark colors for accent
-  const darkColors = getRandomColor([20, 50], [70, 90], complementaryHue)
+  const darkColors = getRandomColor(
+    [20, 50],
+    [70, 90],
+    complementaryHue,
+    baseHue + 97,
+  )
 
   return {
     light: {
@@ -86,12 +92,12 @@ export function addAlphaToHSL(hsl: string, alpha: number): string {
 
 export function hexToHsl(hex: string) {
   // Remove the '#' symbol from the hex code
-  hex = hex.replace('#', '')
+  const normalizedHex = hex.replace('#', '')
 
   // Convert hex values to RGB
-  const r = Number.parseInt(hex.slice(0, 2), 16) / 255
-  const g = Number.parseInt(hex.slice(2, 4), 16) / 255
-  const b = Number.parseInt(hex.slice(4, 6), 16) / 255
+  const r = Number.parseInt(normalizedHex.slice(0, 2), 16) / 255
+  const g = Number.parseInt(normalizedHex.slice(2, 4), 16) / 255
+  const b = Number.parseInt(normalizedHex.slice(4, 6), 16) / 255
 
   // Find the minimum and maximum values among R, G, and B
   const min = Math.min(r, g, b)

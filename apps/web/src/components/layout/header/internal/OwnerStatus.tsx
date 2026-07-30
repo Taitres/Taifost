@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import clsx from 'clsx'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
+import { env } from 'next-runtime-env'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useIsOwnerLogged } from '~/atoms/hooks/owner'
@@ -24,6 +25,8 @@ const EmojiPicker = dynamic(() =>
   ),
 )
 
+const ownerStatusEnabled = env('NEXT_PUBLIC_SHIRO_STATUS_ENABLED') === 'true'
+
 export const OwnerStatus = () => {
   const t = useTranslations('common')
   const pageIsActive = usePageIsActive()
@@ -40,7 +43,7 @@ export const OwnerStatus = () => {
     },
     refetchOnWindowFocus: 'always',
     refetchOnMount: 'always',
-    enabled: pageIsActive,
+    enabled: pageIsActive && ownerStatusEnabled,
     meta: {
       persist: false,
     },
@@ -58,6 +61,9 @@ export const OwnerStatus = () => {
 
   const [mouseEnter, setMouseEnter] = useState(false)
   const { present } = useModalStack()
+
+  if (!ownerStatusEnabled) return null
+
   const triggerElement = (
     <div
       role={isLogged ? 'button' : 'img'}

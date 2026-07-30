@@ -30,10 +30,10 @@ export async function AccentColorStyleInjector({
   const lightColors = light ?? accentColorLight
   const darkColors = dark ?? accentColorDark
 
-  const Length = Math.max(lightColors.length ?? 0, darkColors.length ?? 0)
-  const randomSeedRef = (Math.random() * Length) | 0
-  const currentAccentColorLRef = lightColors[randomSeedRef]
-  const currentAccentColorDRef = darkColors[randomSeedRef]
+  // This component renders inside <head>. A random index can make the RSC
+  // payload and the browser's initial HTML disagree during hydration.
+  const currentAccentColorLRef = lightColors[0] ?? accentColorLight[0]
+  const currentAccentColorDRef = darkColors[0] ?? accentColorDark[0]
 
   const cssContent = await generateAccentColorStyle({
     colors: {

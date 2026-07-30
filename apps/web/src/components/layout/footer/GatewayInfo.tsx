@@ -17,6 +17,7 @@ import { FloatPopover } from '~/components/ui/float-popover'
 import { NumberSmoothTransition } from '~/components/ui/number-transition/NumberSmoothTransition'
 import { TrackerAction } from '~/constants/tracker'
 import { usePageIsActive } from '~/hooks/common/use-is-active'
+import { useIsClient } from '~/hooks/common/use-is-client'
 import { apiClient } from '~/lib/request'
 import { routeBuilder, Routes } from '~/lib/route-builder'
 
@@ -89,7 +90,11 @@ function ConnectionStatus({ isConnected }: { isConnected: boolean }) {
 export const GatewayInfo = () => {
   const t = useTranslations('gateway')
   const isActive = usePageIsActive()
-  const count = useOnlineCount()
+  const isClient = useIsClient()
+  const onlineCount = useOnlineCount()
+  // The socket can receive a live count before hydration starts. Keep the
+  // first browser render identical to the server output, then show live data.
+  const count = isClient ? onlineCount : 0
 
   if (!isActive) return null
   return (

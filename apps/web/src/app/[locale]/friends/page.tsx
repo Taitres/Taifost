@@ -19,7 +19,6 @@ import { Form, FormInput } from '~/components/ui/form'
 import { FullPageLoading } from '~/components/ui/loading'
 import { useModalStack } from '~/components/ui/modal'
 import { BottomToUpTransitionView } from '~/components/ui/transition'
-import { shuffle } from '~/lib/lodash'
 import { apiClient } from '~/lib/request'
 import { getErrorMessageFromRequestError } from '~/lib/request.shared'
 import { toast } from '~/lib/toast'
@@ -74,7 +73,8 @@ export default function Page() {
         }
       }
 
-      return { friends: shuffle(friends), collections, outdated, banned }
+      // Rendering in API order keeps server and client HTML identical.
+      return { friends, collections, outdated, banned }
     }, []),
   })
 
@@ -222,9 +222,11 @@ const ApplyLinkInfo: FC = () => {
   const t = useTranslations('friends')
   const {
     seo,
+    url,
     user: { avatar, name },
   } = useAggregationSelector((a) => ({
     seo: a.seo!,
+    url: a.url,
     user: a.user!,
   }))!
 
@@ -254,9 +256,7 @@ const ApplyLinkInfo: FC = () => {
         <Markdown className="[&_p]:my-1!">
           {[
             '',
-            `${t('info_title')}: [${
-              seo.title
-            }](${`${location.protocol}//${location.host}`})`,
+            `${t('info_title')}: [${seo.title}](${url.webUrl})`,
             `${t('info_description')}: ${seo.description}`,
             `${t('info_avatar')}: [${t('info_avatar_download')}](${avatar})`,
             `${t('info_name')}: ${name}`,

@@ -26,22 +26,25 @@ export const generateMetadata = async (
 export const dynamic = 'force-dynamic'
 
 export default definePrerenderPage<{
-  type: string
-  year: string
+  type?: string
+  year?: string
 }>()({
   async fetcher({ type, year }) {
-    const nextType = {
-      post: TimelineType.Post,
-      note: TimelineType.Note,
-    }[type]
+    const nextType =
+      type === 'post'
+        ? TimelineType.Post
+        : type === 'note'
+          ? TimelineType.Note
+          : undefined
+    const normalizedYear = year || undefined
     const queryClient = getQueryClient()
     await queryClient.fetchQuery({
-      queryKey: ['timeline', nextType, year],
+      queryKey: ['timeline', nextType, normalizedYear],
       queryFn: async () =>
         await apiClient.aggregate
           .getTimeline({
             type: nextType,
-            year: +(year || 0) || undefined,
+            year: +(normalizedYear || 0) || undefined,
           })
           .then((res: { data: unknown }) => res.data),
     })

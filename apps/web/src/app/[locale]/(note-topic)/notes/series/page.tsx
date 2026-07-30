@@ -1,5 +1,6 @@
 import type { TopicModel } from '@mx-space/api-client'
 
+import { NothingFound } from '~/components/modules/shared/NothingFound'
 import { TimelineList } from '~/components/ui/list/TimelineList'
 import {
   BottomToUpSoftScaleTransitionView,
@@ -19,35 +20,39 @@ export default definePrerenderPage()<TopicModel[]>({
       </header>
 
       <main className="mt-10 text-zinc-950/80 dark:text-zinc-50/80">
-        <TimelineList>
-          {data.map((item: TopicModel, i: number) => {
-            const date = new Date(item.created)
+        {data.length === 0 ? (
+          <NothingFound />
+        ) : (
+          <TimelineList>
+            {data.map((item: TopicModel, i: number) => {
+              const date = new Date(item.created)
 
-            return (
-              <BottomToUpTransitionView
-                lcpOptimization
-                key={item.id}
-                delay={700 + 50 * i}
-                as="li"
-                className="flex min-w-0 items-center justify-between leading-loose"
-              >
-                <Link
-                  href={routeBuilder(Routes.NoteTopic, {
-                    slug: item.slug,
-                  })}
-                  className="min-w-0 truncate"
+              return (
+                <BottomToUpTransitionView
+                  lcpOptimization
+                  key={item.id}
+                  delay={700 + 50 * i}
+                  as="li"
+                  className="flex min-w-0 items-center justify-between leading-loose"
                 >
-                  {item.name}
-                </Link>
-                <span className="opacity-60">
-                  {(date.getMonth() + 1).toString().padStart(2, '0')}/
-                  {date.getDate().toString().padStart(2, '0')}/
-                  {date.getFullYear()}
-                </span>
-              </BottomToUpTransitionView>
-            )
-          })}
-        </TimelineList>
+                  <Link
+                    href={routeBuilder(Routes.NoteTopic, {
+                      slug: item.slug,
+                    })}
+                    className="min-w-0 truncate"
+                  >
+                    {item.name}
+                  </Link>
+                  <span className="opacity-60">
+                    {(date.getMonth() + 1).toString().padStart(2, '0')}/
+                    {date.getDate().toString().padStart(2, '0')}/
+                    {date.getFullYear()}
+                  </span>
+                </BottomToUpTransitionView>
+              )
+            })}
+          </TimelineList>
+        )}
       </main>
     </BottomToUpSoftScaleTransitionView>
   ),

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { PublicEnvScript } from 'next-runtime-env'
 import type { PropsWithChildren } from 'react'
 
 import { sansFont } from '~/lib/fonts'
@@ -11,6 +12,9 @@ export const metadata: Metadata = {
 export default function StudioLayout({ children }: PropsWithChildren) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
+      <head>
+        <PublicEnvScript />
+      </head>
       <body className={`${sansFont.variable} m-0 min-h-screen font-sans`}>
         {children}
       </body>

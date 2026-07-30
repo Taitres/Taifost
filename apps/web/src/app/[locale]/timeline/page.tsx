@@ -37,6 +37,19 @@ type MapType = {
   important?: boolean
 }
 
+const SITE_TIME_ZONE = 'Asia/Shanghai'
+const timelineDateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: '2-digit',
+  day: '2-digit',
+  timeZone: SITE_TIME_ZONE,
+})
+const timelineYearFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  timeZone: SITE_TIME_ZONE,
+})
+const getTimelineYear = (date: Date) =>
+  Number.parseInt(timelineYearFormatter.format(date), 10)
+
 const useJumpTo = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -85,22 +98,23 @@ export default function TimelinePage() {
   const t = useTranslations('home')
   const search = useSearchParams()
 
-  const year = search.get('year')
-  const type = search.get('type') as 'post' | 'note'
-  const nextType = {
-    post: TimelineType.Post,
-    note: TimelineType.Note,
-  }[type]
+  const year = search.get('year') || undefined
+  const type = (search.get('type') || undefined) as 'post' | 'note' | undefined
+  const nextType =
+    type === 'post'
+      ? TimelineType.Post
+      : type === 'note'
+        ? TimelineType.Note
+        : undefined
 
-  const { data: initialData } = useQuery<TimelineData>({
-    queryKey: ['timeline'],
-    enabled: false,
-  })
-  const { data, refetch } = useQuery<TimelineData>({
+  const { data } = useQuery<TimelineData>({
     queryKey: ['timeline', nextType, year],
-    initialData,
     queryFn: async ({ queryKey }) => {
-      const [, nextType, year] = queryKey as [string, TimelineType, string]
+      const [, nextType, year] = queryKey as [
+        string,
+        TimelineType | undefined,
+        string | undefined,
+      ]
       return await apiClient.aggregate
         .getTimeline({
           type: nextType,
@@ -109,10 +123,6 @@ export default function TimelinePage() {
         .then((res: { data: TimelineData }) => res.data)
     },
   })
-
-  useEffect(() => {
-    refetch()
-  }, [nextType])
 
   useJumpTo()
 
@@ -128,7 +138,7 @@ export default function TimelinePage() {
   if (!memory) {
     posts.forEach((post) => {
       const date = new Date(post.created)
-      const year = date.getFullYear()
+      const year = getTimelineYear(date)
       const data: MapType = {
         title: post.title,
         meta: [post.category.name, t('timeline_post')],
@@ -149,7 +159,7 @@ export default function TimelinePage() {
     .filter((n) => (memory ? n.bookmark : true))
     .forEach((note) => {
       const date = new Date(note.created)
-      const year = date.getFullYear()
+      const year = getTimelineYear(date)
       const data: MapType = {
         title: note.title,
         meta: [
@@ -185,9 +195,10 @@ export default function TimelinePage() {
   })
 
   const sortedArr = Array.from(sortedMap)
-  const postCount = sortedArr
-    .flat(2)
-    .filter((i) => typeof i === 'object').length
+  const postCount = sortedArr.reduce(
+    (count, [, items]) => count + items.length,
+    0,
+  )
 
   const subtitle = `${t('timeline_total')}${postCount}${t('timeline_posts')}${!memory ? t('timeline_keep_going') : t('timeline_look_back')}`
 
@@ -244,10 +255,7 @@ const Item = memo<{
     >
       <span className="flex min-w-0 shrink items-center">
         <span className="mr-2 inline-block w-12 tabular-nums">
-          {Intl.DateTimeFormat('en-us', {
-            month: '2-digit',
-            day: '2-digit',
-          }).format(item.date)}
+          {timelineDateFormatter.format(item.date)}
         </span>
         <PeekLink href={item.href} className="min-w-0 truncate leading-6">
           <span className="min-w-0 truncate">{item.title}</span>

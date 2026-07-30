@@ -16,12 +16,15 @@ import { useAggregationSelector } from '~/providers/root/aggregation-data-provid
 export const useAuthProviders = () => {
   const { data } = useQuery({
     queryKey: ['providers'],
-    queryFn: () =>
-      apiClient.proxy.auth.providers
-        .get<{
-          data: AuthSocialProviders[]
-        }>()
-        .then((res: { data: AuthSocialProviders[] }) => res.data),
+    queryFn: async () => {
+      const response = await apiClient.proxy.auth.providers.get<
+        AuthSocialProviders[] | { data: AuthSocialProviders[] }
+      >()
+
+      // Core v3 responses are unwrapped by the compatibility adapter, while
+      // older Core versions return the legacy `{ data }` envelope.
+      return Array.isArray(response) ? response : response.data
+    },
     refetchOnMount: 'always',
     meta: {
       persist: true,
