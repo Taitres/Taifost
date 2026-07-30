@@ -34,15 +34,28 @@ export const HeaderDataConfigureProvider: Component = ({ children }) => {
   const postListViewMode = useAppConfigSelector(
     (appConfig) => appConfig.module?.posts?.mode,
   )
+  const configuredNavigation = useAppConfigSelector(
+    (appConfig) => appConfig.presentation?.navigation,
+  )
 
   const [headerMenuConfig, setHeaderMenuConfig] = useState(() =>
     cloneHeaderMenuConfig(baseHeaderMenuConfig),
   )
 
   useEffect(() => {
-    if (!pageMeta) return
-    const nextMenuConfig = cloneHeaderMenuConfig(baseHeaderMenuConfig)
-    if (pageMeta) {
+    const hasConfiguredNavigation = Boolean(configuredNavigation?.length)
+    const nextMenuConfig = hasConfiguredNavigation
+      ? configuredNavigation!
+          .filter(({ enabled }) => enabled !== false)
+          .map(
+            ({ name, href }): IHeaderMenu => ({
+              title: name,
+              path: href,
+            }),
+          )
+      : cloneHeaderMenuConfig(baseHeaderMenuConfig)
+
+    if (!hasConfiguredNavigation && pageMeta) {
       const homeIndex = nextMenuConfig.findIndex((item) => item.type === 'Home')
       if (homeIndex !== -1) {
         nextMenuConfig[homeIndex].subMenu = []
@@ -56,7 +69,7 @@ export const HeaderDataConfigureProvider: Component = ({ children }) => {
     }
 
     setHeaderMenuConfig(nextMenuConfig)
-  }, [pageMeta])
+  }, [configuredNavigation, pageMeta])
 
   useEffect(() => {
     setHeaderMenuConfig((config) => {

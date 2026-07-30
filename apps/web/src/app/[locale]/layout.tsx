@@ -26,6 +26,7 @@ import {
   resolveMarlinTheme,
 } from '~/lib/marlin-theme'
 import { apiClient } from '~/lib/request'
+import { DEFAULT_SITE_TIMEZONE, isValidTimeZone } from '~/lib/site-timezone'
 import { AggregationProvider } from '~/providers/root/aggregation-data-provider'
 import { AppFeatureProvider } from '~/providers/root/app-feature-provider'
 import { HydrateuserAuthProvider } from '~/providers/root/hydrate-user-auth-provider'
@@ -233,6 +234,11 @@ export default async function LocaleLayout({ children, params }: Props) {
     userAuth && isMarlinThemeId(previewMarlinTheme)
       ? previewMarlinTheme
       : configuredMarlinTheme
+  const configuredSiteTimezone =
+    themeConfig?.config?.presentation?.timezone || DEFAULT_SITE_TIMEZONE
+  const siteTimezone = isValidTimeZone(configuredSiteTimezone)
+    ? configuredSiteTimezone
+    : DEFAULT_SITE_TIMEZONE
 
   return (
     <>
@@ -240,6 +246,7 @@ export default async function LocaleLayout({ children, params }: Props) {
         lang={locale}
         className="noise themed"
         data-marlin-theme={marlinTheme}
+        data-site-timezone={siteTimezone}
         suppressHydrationWarning
       >
         <head>

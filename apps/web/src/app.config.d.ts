@@ -27,6 +27,15 @@ declare global {
 
   export interface PresentationConfig {
     theme?: 'console' | 'reader' | 'signal'
+    timezone?: string
+    navigation?: PresentationNavigationItem[]
+  }
+
+  export interface PresentationNavigationItem {
+    name: string
+    href: string
+    external?: boolean
+    enabled?: boolean
   }
 
   export interface LinkSection {

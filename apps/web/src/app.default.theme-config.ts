@@ -42,6 +42,10 @@ export const defaultThemeConfig: AppThemeConfig = {
         mode: 'loose',
       },
     },
+    presentation: {
+      theme: 'console',
+      timezone: 'Asia/Shanghai',
+    },
   },
   footer: {
     linkSections: [],

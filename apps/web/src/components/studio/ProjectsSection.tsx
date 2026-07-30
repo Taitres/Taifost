@@ -3,6 +3,7 @@
 import type { FormEvent } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 
+import { zonedLocalDateTimeToIso } from '~/lib/site-timezone'
 import { studioJson, studioRequest } from '~/lib/studio-api'
 
 import {
@@ -33,12 +34,14 @@ export function ProjectsSection({
   projects,
   materials,
   categories,
+  timezone,
   reload,
   notify,
 }: {
   projects: Project[]
   materials: Material[]
   categories: Category[]
+  timezone: string
   reload: () => Promise<void>
   notify: (message: string, error?: boolean) => void
 }) {
@@ -682,6 +685,9 @@ export function ProjectsSection({
                     value={scheduledAt}
                     onChange={(event) => setScheduledAt(event.target.value)}
                   />
+                  <span className="text-xs font-normal text-zinc-400">
+                    按 {timezone} 输入，保存为 UTC 绝对时刻
+                  </span>
                 </StudioLabel>
                 <StudioButton
                   disabled={!project.approved_revision_id}
@@ -693,7 +699,7 @@ export function ProjectsSection({
                           method: 'POST',
                           body: studioJson({
                             scheduled_at: scheduledAt
-                              ? new Date(scheduledAt).toISOString()
+                              ? zonedLocalDateTimeToIso(scheduledAt, timezone)
                               : undefined,
                           }),
                         },

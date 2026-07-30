@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
+import { DEFAULT_SITE_TIMEZONE } from '~/lib/site-timezone'
 import {
   StudioApiError,
   studioCheckAuth,
@@ -66,6 +67,7 @@ interface StudioData {
   roles: AiRole[]
   categories: Category[]
   pages: CorePage[]
+  siteTimezone: string
 }
 
 const emptyData: StudioData = {
@@ -78,6 +80,7 @@ const emptyData: StudioData = {
   roles: [],
   categories: [],
   pages: [],
+  siteTimezone: DEFAULT_SITE_TIMEZONE,
 }
 
 export function StudioApp() {
@@ -109,6 +112,7 @@ export function StudioApp() {
         roles,
         categories,
         pages,
+        themeSnippet,
       ] = await Promise.all([
         studioRequest<Material[]>('/marlin/materials?page=1&size=100'),
         studioRequest<MediaAsset[]>('/marlin/materials/media'),
@@ -121,7 +125,15 @@ export function StudioApp() {
         studioRequest<AiRole[]>('/marlin/ai/roles'),
         studioRequest<Category[]>('/categories?page=1&size=100'),
         studioRequest<CorePage[]>('/pages?page=1&size=100'),
+        studioRequest<{ raw?: string } | null>(
+          '/snippets/by-path?path=theme%2Fshiro',
+        ),
       ])
+      const parsedTheme = themeSnippet?.raw
+        ? (JSON.parse(themeSnippet.raw) as {
+            config?: { presentation?: { timezone?: string } }
+          })
+        : null
       setData({
         materials,
         media,
@@ -132,6 +144,8 @@ export function StudioApp() {
         roles,
         categories,
         pages,
+        siteTimezone:
+          parsedTheme?.config?.presentation?.timezone || DEFAULT_SITE_TIMEZONE,
       })
     } catch (error) {
       if (error instanceof StudioApiError && error.status === 401) {
@@ -284,6 +298,7 @@ export function StudioApp() {
               projects={data.projects}
               materials={data.materials}
               categories={data.categories}
+              timezone={data.siteTimezone}
               reload={load}
               notify={notify}
             />
@@ -300,7 +315,11 @@ export function StudioApp() {
             />
           )}
           {section === 'settings' && (
-            <SettingsSection authToken={previewToken} notify={notify} />
+            <SettingsSection
+              authToken={previewToken}
+              notify={notify}
+              reload={load}
+            />
           )}
         </div>
       </div>
