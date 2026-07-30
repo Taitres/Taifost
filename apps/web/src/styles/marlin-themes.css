@@ -1,0 +1,158 @@
+/*
+ * MARLIN public presentation themes.
+ * The regular light/dark switch remains independent from this site-wide theme.
+ */
+
+html[data-marlin-theme='console'] {
+  --marlin-display-font: var(--font-sans);
+  --marlin-theme-accent: #0f766e;
+  --marlin-theme-surface: color-mix(
+    in srgb,
+    var(--color-root-bg) 94%,
+    #39c5bb 6%
+  );
+}
+
+html[data-marlin-theme='console'] body {
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--color-border) 46%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-border) 46%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 32px 32px;
+}
+
+html[data-marlin-theme='console'] [data-site-header] {
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-root-bg) 84%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+html[data-marlin-theme='console'] :is(h1, h2, h3, .prose header) {
+  font-family: var(--marlin-display-font);
+  letter-spacing: -0.035em;
+}
+
+html[data-marlin-theme='console'] [data-site-footer] {
+  background: var(--marlin-theme-surface);
+}
+
+html[data-marlin-theme='reader'] {
+  --color-root-bg: #f6f0e4;
+  --marlin-display-font: var(--font-serif);
+  --marlin-theme-accent: #9a3412;
+  --marlin-theme-surface: #eee4d2;
+}
+
+html[data-theme='dark'][data-marlin-theme='reader'] {
+  --color-root-bg: #1d1a17;
+  --marlin-theme-surface: #27211b;
+  --color-border: rgba(231, 219, 197, 0.16);
+}
+
+html[data-marlin-theme='reader'] body {
+  background:
+    radial-gradient(
+      circle at 15% 10%,
+      color-mix(in srgb, var(--marlin-theme-accent) 7%, transparent),
+      transparent 32rem
+    ),
+    var(--color-root-bg);
+}
+
+html[data-marlin-theme='reader'] [data-site-header] {
+  background: color-mix(in srgb, var(--color-root-bg) 88%, transparent);
+  box-shadow: 0 1px 0 var(--color-border);
+  backdrop-filter: blur(20px) saturate(0.75);
+}
+
+html[data-marlin-theme='reader'] [data-site-content] {
+  font-family: var(--font-serif);
+}
+
+html[data-marlin-theme='reader'] :is(h1, h2, h3, h4, .prose header) {
+  font-family: var(--marlin-display-font);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+html[data-marlin-theme='reader'] .prose {
+  font-size: 1.075rem;
+  line-height: 1.95;
+}
+
+html[data-marlin-theme='reader'] [data-site-footer] {
+  border-color: var(--color-border);
+  background: var(--marlin-theme-surface);
+}
+
+html[data-marlin-theme='signal'] {
+  --color-root-bg: #f7f7f0;
+  --marlin-display-font: var(--font-sans);
+  --marlin-theme-accent: #3157ff;
+  --marlin-theme-surface: #f5ff00;
+  --color-border: rgba(9, 9, 11, 0.75);
+}
+
+html[data-theme='dark'][data-marlin-theme='signal'] {
+  --color-root-bg: #111111;
+  --marlin-theme-surface: #3157ff;
+  --color-border: rgba(255, 255, 255, 0.65);
+}
+
+html[data-marlin-theme='signal'] body {
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent calc(100% - 1px),
+      color-mix(in srgb, var(--color-border) 24%, transparent) 0
+    ),
+    linear-gradient(
+      transparent calc(100% - 1px),
+      color-mix(in srgb, var(--color-border) 24%, transparent) 0
+    );
+  background-size: min(12vw, 10rem) min(12vw, 10rem);
+}
+
+html[data-marlin-theme='signal'] [data-site-header] {
+  border-bottom: 2px solid var(--color-border);
+  background: var(--marlin-theme-surface);
+  color: #09090b;
+}
+
+html[data-marlin-theme='signal'] :is(h1, h2, h3, h4, .prose header) {
+  font-family: var(--marlin-display-font);
+  font-weight: 900;
+  letter-spacing: -0.055em;
+}
+
+html[data-marlin-theme='signal'] :is(button, input, textarea, select) {
+  border-radius: 0.25rem;
+}
+
+html[data-marlin-theme='signal'] a {
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.2em;
+}
+
+html[data-marlin-theme='signal'] [data-site-footer] {
+  border-top: 2px solid var(--color-border);
+  background: var(--marlin-theme-surface);
+  color: #09090b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-marlin-theme] *,
+  html[data-marlin-theme] *::before,
+  html[data-marlin-theme] *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

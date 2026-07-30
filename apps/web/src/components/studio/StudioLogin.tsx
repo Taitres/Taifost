@@ -12,7 +12,11 @@ import {
   StudioLabel,
 } from './primitives'
 
-export function StudioLogin({ onSuccess }: { onSuccess: () => void }) {
+export function StudioLogin({
+  onSuccess,
+}: {
+  onSuccess: (token?: string) => void
+}) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -27,7 +31,7 @@ export function StudioLogin({ onSuccess }: { onSuccess: () => void }) {
       if (result.user?.role !== 'owner') {
         throw new Error('该账号不是站点所有者')
       }
-      onSuccess()
+      onSuccess(result.token)
     } catch (error) {
       setError(
         error instanceof StudioApiError || error instanceof Error

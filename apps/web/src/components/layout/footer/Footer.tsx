@@ -5,6 +5,7 @@ import { LocaleSwitcher } from './LocaleSwitcher'
 
 export const Footer = () => (
   <footer
+    data-site-footer
     data-hide-print
     className="relative z-[1] mt-32 border-t bg-[var(--footer-bg)] py-6 text-base-content/80"
   >

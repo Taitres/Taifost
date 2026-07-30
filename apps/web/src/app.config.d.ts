@@ -16,12 +16,17 @@ declare global {
     hero: Hero
     module: Module
     color?: AccentColor
+    presentation?: PresentationConfig
 
     custom?: Custom
 
     poweredBy?: {
       vercel?: boolean
     }
+  }
+
+  export interface PresentationConfig {
+    theme?: 'console' | 'reader' | 'signal'
   }
 
   export interface LinkSection {

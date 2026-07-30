@@ -5,6 +5,7 @@
 @import './print.css';
 
 @import './theme.css';
+@import './marlin-themes.css';
 @import './webfont.css';
 @import './mask.css';
 @import 'react-photo-view/dist/react-photo-view.css';

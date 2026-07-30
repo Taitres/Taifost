@@ -16,6 +16,7 @@ import { MediaSection } from './MediaSection'
 import { PagesSection } from './PagesSection'
 import { StatusPill, StudioButton, StudioCard } from './primitives'
 import { ProjectsSection } from './ProjectsSection'
+import { SettingsSection } from './SettingsSection'
 import { StudioLogin } from './StudioLogin'
 import type {
   AiRole,
@@ -37,6 +38,7 @@ type Section =
   | 'projects'
   | 'pages'
   | 'ai'
+  | 'settings'
 
 const navigation: Array<{
   id: Section
@@ -51,6 +53,7 @@ const navigation: Array<{
   { id: 'projects', label: '创作项目', description: '修订与发布', icon: '✎' },
   { id: 'pages', label: '独立页面', description: '跳过审阅', icon: '▤' },
   { id: 'ai', label: 'AI 编辑部', description: '角色与预算', icon: '✦' },
+  { id: 'settings', label: '站点设置', description: '主题与展示', icon: '⚙' },
 ]
 
 interface StudioData {
@@ -79,6 +82,7 @@ const emptyData: StudioData = {
 
 export function StudioApp() {
   const [auth, setAuth] = useState<'loading' | 'yes' | 'no'>('loading')
+  const [previewToken, setPreviewToken] = useState<string>()
   const [section, setSection] = useState<Section>('overview')
   const [data, setData] = useState<StudioData>(emptyData)
   const [loading, setLoading] = useState(false)
@@ -161,7 +165,8 @@ export function StudioApp() {
   if (auth === 'no') {
     return (
       <StudioLogin
-        onSuccess={() => {
+        onSuccess={(token) => {
+          setPreviewToken(token)
           setAuth('yes')
           void load()
         }}
@@ -243,6 +248,7 @@ export function StudioApp() {
                 tone="ghost"
                 onClick={async () => {
                   await studioLogout().catch(() => null)
+                  setPreviewToken(undefined)
                   setAuth('no')
                 }}
               >
@@ -292,6 +298,9 @@ export function StudioApp() {
               reload={load}
               notify={notify}
             />
+          )}
+          {section === 'settings' && (
+            <SettingsSection authToken={previewToken} notify={notify} />
           )}
         </div>
       </div>

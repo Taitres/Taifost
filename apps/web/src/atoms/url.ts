@@ -5,25 +5,27 @@ import { jotaiStore } from '~/lib/store'
 import { queryClient } from '~/providers/root/react-query-provider'
 
 export interface UrlConfig {
-  adminUrl: string
-
+  adminUrl?: string
   webUrl: string
 }
+
+type UrlConfigResponse = UrlConfig | { data: UrlConfig }
 
 export const adminUrlAtom = atom<string | null>(null)
 export const webUrlAtom = atom<string | null>(null)
 
 export const fetchAppUrl = async () => {
-  const { data } = await queryClient.fetchQuery({
+  const response = await queryClient.fetchQuery({
     queryKey: ['app.url'],
-    queryFn: () =>
-      apiClient.proxy.options.url.get<{
-        data: UrlConfig
-      }>(),
+    queryFn: () => apiClient.proxy.options.url.get<UrlConfigResponse>(),
   })
+  const data =
+    response && 'data' in response
+      ? response.data
+      : (response as unknown as UrlConfig)
 
-  if (data.adminUrl) jotaiStore.set(adminUrlAtom, data.adminUrl)
-  jotaiStore.set(webUrlAtom, data.webUrl)
+  if (data?.adminUrl) jotaiStore.set(adminUrlAtom, data.adminUrl)
+  if (data?.webUrl) jotaiStore.set(webUrlAtom, data.webUrl)
   return data
 }
 

@@ -26,6 +26,7 @@ export const Header = () => (
 const MemoedHeader = memo(() => {
   return (
     <div
+      data-site-header
       className="fixed top-0 z-[9] h-[4.5rem] w-0 lg:inset-x-0 lg:w-auto"
       data-hide-print
     >

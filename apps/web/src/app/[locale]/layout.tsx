@@ -19,6 +19,12 @@ import { TocAutoScroll } from '~/components/modules/toc/TocAutoScroll'
 import { routing } from '~/i18n/routing'
 import { PreRenderError } from '~/lib/error-factory'
 import { sansFont, serifFont } from '~/lib/fonts'
+import {
+  isMarlinThemeId,
+  MARLIN_THEME_PREVIEW_COOKIE,
+  MARLIN_THEME_PREVIEW_TOKEN_COOKIE,
+  resolveMarlinTheme,
+} from '~/lib/marlin-theme'
 import { apiClient } from '~/lib/request'
 import { AggregationProvider } from '~/providers/root/aggregation-data-provider'
 import { AppFeatureProvider } from '~/providers/root/app-feature-provider'
@@ -199,17 +205,43 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   headers.append('user-agent', `Shiro/${version}`)
 
-  const userAuth = await fetch(
+  const userAuthFromSession = await fetch(
     apiClient.proxy('owner')('check_logged').toString(true),
     { headers },
   )
     .then((res) => res.json())
-    .then((res) => !!res.ok)
+    .then((res) => !!(res.data?.ok ?? res.ok))
     .catch(() => false)
+
+  const cookieStore = await cookies()
+  const previewToken = cookieStore.get(MARLIN_THEME_PREVIEW_TOKEN_COOKIE)?.value
+  const userAuthFromPreviewToken =
+    !userAuthFromSession && previewToken
+      ? await fetch(apiClient.proxy('owner')('check_logged').toString(true), {
+          headers: { authorization: `Bearer ${previewToken}` },
+        })
+          .then((res) => res.json())
+          .then((res) => !!(res.data?.ok ?? res.ok))
+          .catch(() => false)
+      : false
+  const userAuth = userAuthFromSession || userAuthFromPreviewToken
+  const configuredMarlinTheme = resolveMarlinTheme(
+    themeConfig?.config?.presentation?.theme,
+  )
+  const previewMarlinTheme = cookieStore.get(MARLIN_THEME_PREVIEW_COOKIE)?.value
+  const marlinTheme =
+    userAuth && isMarlinThemeId(previewMarlinTheme)
+      ? previewMarlinTheme
+      : configuredMarlinTheme
 
   return (
     <>
-      <html lang={locale} className="noise themed" suppressHydrationWarning>
+      <html
+        lang={locale}
+        className="noise themed"
+        data-marlin-theme={marlinTheme}
+        suppressHydrationWarning
+      >
         <head>
           <PublicEnvScript />
           <Global />
