@@ -14,6 +14,7 @@ import { AiSection } from './AiSection'
 import { HotspotsSection } from './HotspotsSection'
 import { MaterialsSection } from './MaterialsSection'
 import { MediaSection } from './MediaSection'
+import { OpsSection } from './OpsSection'
 import { PagesSection } from './PagesSection'
 import { StatusPill, StudioButton, StudioCard } from './primitives'
 import { ProjectsSection } from './ProjectsSection'
@@ -39,6 +40,7 @@ type Section =
   | 'projects'
   | 'pages'
   | 'ai'
+  | 'ops'
   | 'settings'
 
 const navigation: Array<{
@@ -54,6 +56,7 @@ const navigation: Array<{
   { id: 'projects', label: '创作项目', description: '修订与发布', icon: '✎' },
   { id: 'pages', label: '独立页面', description: '跳过审阅', icon: '▤' },
   { id: 'ai', label: 'AI 编辑部', description: '角色与预算', icon: '✦' },
+  { id: 'ops', label: '运维中心', description: '健康与备份', icon: '◉' },
   { id: 'settings', label: '站点设置', description: '主题与展示', icon: '⚙' },
 ]
 
@@ -314,6 +317,7 @@ export function StudioApp() {
               notify={notify}
             />
           )}
+          {section === 'ops' && <OpsSection notify={notify} />}
           {section === 'settings' && (
             <SettingsSection
               authToken={previewToken}

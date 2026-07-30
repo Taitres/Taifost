@@ -28,6 +28,20 @@ export class StudioApiError extends Error {
 const apiUrl = (path: string) =>
   `${API_URL.replace(/\/$/, '')}/${path.replace(/^\//, '')}`
 
+let bearerToken: string | undefined
+
+export const studioFetch = (path: string, init: RequestInit = {}) => {
+  const headers = new Headers(init.headers)
+  if (bearerToken && !headers.has('authorization')) {
+    headers.set('authorization', `Bearer ${bearerToken}`)
+  }
+  return fetch(apiUrl(path), {
+    ...init,
+    headers,
+    credentials: 'include',
+  })
+}
+
 const parseResponse = async <T>(response: Response): Promise<T> => {
   const body = (await response.json().catch(() => null)) as
     | StudioEnvelope<T>
@@ -57,24 +71,31 @@ export const studioRequest = async <T>(
   if (init.body && !headers.has('content-type')) {
     headers.set('content-type', 'application/json')
   }
-  return fetch(apiUrl(path), {
+  return studioFetch(path, {
     ...init,
     headers,
-    credentials: 'include',
   }).then(parseResponse<T>)
 }
 
-export const studioLogin = async (username: string, password: string) =>
-  studioRequest<{ user: { role?: string; name?: string }; token?: string }>(
-    '/auth/sign-in/username',
-    {
-      method: 'POST',
-      body: JSON.stringify({ username, password }),
-    },
-  )
+export const studioLogin = async (username: string, password: string) => {
+  const result = await studioRequest<{
+    user: { role?: string; name?: string }
+    token?: string
+  }>('/auth/sign-in/username', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  })
+  bearerToken = result.token
+  return result
+}
 
-export const studioLogout = () =>
-  studioRequest('/auth/sign-out', { method: 'POST' })
+export const studioLogout = async () => {
+  try {
+    return await studioRequest('/auth/sign-out', { method: 'POST' })
+  } finally {
+    bearerToken = undefined
+  }
+}
 
 export const studioCheckAuth = async () => {
   try {
