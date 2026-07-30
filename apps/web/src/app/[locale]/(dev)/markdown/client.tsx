@@ -1,11 +1,12 @@
 'use client'
 
+import { ClientOnly } from '~/components/common/ClientOnly'
 import { Markdown } from '~/components/ui/markdown/Markdown'
 
 export const MarkdownClient = (props: { children: string }) => {
-  if (typeof window === 'undefined') {
-    return null
-  }
-
-  return <Markdown>{props.children}</Markdown>
+  return (
+    <ClientOnly>
+      <Markdown>{props.children}</Markdown>
+    </ClientOnly>
+  )
 }
