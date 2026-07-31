@@ -1,8 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { DEFAULT_SITE_TIMEZONE } from '~/lib/site-timezone'
 import {
   StudioApiError,
   studioCheckAuth,
@@ -15,33 +14,16 @@ import { HotspotsSection } from './HotspotsSection'
 import { MaterialsSection } from './MaterialsSection'
 import { MediaSection } from './MediaSection'
 import { OpsSection } from './OpsSection'
+import { OverviewSection } from './OverviewSection'
 import { PagesSection } from './PagesSection'
-import { StatusPill, StudioButton, StudioCard } from './primitives'
+import { StudioButton } from './primitives'
 import { ProjectsSection } from './ProjectsSection'
 import { SettingsSection } from './SettingsSection'
+import type { StudioData, StudioLoadFailure } from './studio-data'
+import { emptyStudioData, loadStudioSnapshot } from './studio-data'
+import type { StudioSection as Section } from './studio-navigation'
+import { readStudioSection, studioSectionUrl } from './studio-navigation'
 import { StudioLogin } from './StudioLogin'
-import type {
-  AiRole,
-  Category,
-  CorePage,
-  HotspotCandidate,
-  HotspotSource,
-  HotspotTheme,
-  Material,
-  MediaAsset,
-  Project,
-} from './types'
-
-type Section =
-  | 'overview'
-  | 'materials'
-  | 'media'
-  | 'hotspots'
-  | 'projects'
-  | 'pages'
-  | 'ai'
-  | 'ops'
-  | 'settings'
 
 const navigation: Array<{
   id: Section
@@ -60,37 +42,13 @@ const navigation: Array<{
   { id: 'settings', label: '站点设置', description: '主题与展示', icon: '⚙' },
 ]
 
-interface StudioData {
-  materials: Material[]
-  media: MediaAsset[]
-  projects: Project[]
-  themes: HotspotTheme[]
-  sources: HotspotSource[]
-  candidates: HotspotCandidate[]
-  roles: AiRole[]
-  categories: Category[]
-  pages: CorePage[]
-  siteTimezone: string
-}
-
-const emptyData: StudioData = {
-  materials: [],
-  media: [],
-  projects: [],
-  themes: [],
-  sources: [],
-  candidates: [],
-  roles: [],
-  categories: [],
-  pages: [],
-  siteTimezone: DEFAULT_SITE_TIMEZONE,
-}
-
 export function StudioApp() {
   const [auth, setAuth] = useState<'loading' | 'yes' | 'no'>('loading')
   const [previewToken, setPreviewToken] = useState<string>()
   const [section, setSection] = useState<Section>('overview')
-  const [data, setData] = useState<StudioData>(emptyData)
+  const [data, setData] = useState<StudioData>(emptyStudioData)
+  const dataRef = useRef<StudioData>(emptyStudioData)
+  const [loadFailures, setLoadFailures] = useState<StudioLoadFailure[]>([])
   const [loading, setLoading] = useState(false)
   const [notice, setNotice] = useState<{
     message: string
@@ -105,51 +63,21 @@ export function StudioApp() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [
-        materials,
-        media,
-        projects,
-        themes,
-        sources,
-        candidates,
-        roles,
-        categories,
-        pages,
-        themeSnippet,
-      ] = await Promise.all([
-        studioRequest<Material[]>('/marlin/materials?page=1&size=100'),
-        studioRequest<MediaAsset[]>('/marlin/materials/media'),
-        studioRequest<Project[]>('/marlin/projects?page=1&size=100'),
-        studioRequest<HotspotTheme[]>('/marlin/hotspots/themes'),
-        studioRequest<HotspotSource[]>('/marlin/hotspots/sources'),
-        studioRequest<HotspotCandidate[]>(
-          '/marlin/hotspots/candidates?page=1&size=100',
-        ),
-        studioRequest<AiRole[]>('/marlin/ai/roles'),
-        studioRequest<Category[]>('/categories?page=1&size=100'),
-        studioRequest<CorePage[]>('/pages?page=1&size=100'),
-        studioRequest<{ raw?: string } | null>(
-          '/snippets/by-path?path=theme%2Fshiro',
-        ),
-      ])
-      const parsedTheme = themeSnippet?.raw
-        ? (JSON.parse(themeSnippet.raw) as {
-            config?: { presentation?: { timezone?: string } }
-          })
-        : null
-      setData({
-        materials,
-        media,
-        projects,
-        themes,
-        sources,
-        candidates,
-        roles,
-        categories,
-        pages,
-        siteTimezone:
-          parsedTheme?.config?.presentation?.timezone || DEFAULT_SITE_TIMEZONE,
-      })
+      const snapshot = await loadStudioSnapshot(
+        (path) => studioRequest<unknown>(path),
+        dataRef.current,
+      )
+      dataRef.current = snapshot.data
+      setData(snapshot.data)
+      setLoadFailures(snapshot.failures)
+      if (snapshot.failures.length > 0) {
+        notify(
+          `部分模块暂不可用：${snapshot.failures
+            .map(({ label }) => label)
+            .join('、')}；其余数据已正常显示`,
+          true,
+        )
+      }
     } catch (error) {
       if (error instanceof StudioApiError && error.status === 401) {
         setAuth('no')
@@ -170,6 +98,23 @@ export function StudioApp() {
       if (ok) void load()
     })
   }, [load])
+
+  useEffect(() => {
+    const syncSectionFromUrl = () => {
+      setSection(readStudioSection(window.location.search))
+    }
+    syncSectionFromUrl()
+    window.addEventListener('popstate', syncSectionFromUrl)
+    return () => window.removeEventListener('popstate', syncSectionFromUrl)
+  }, [])
+
+  const navigate = useCallback((nextSection: Section) => {
+    setSection(nextSection)
+    const nextUrl = studioSectionUrl(nextSection, window.location.href)
+    if (`${window.location.pathname}${window.location.search}` !== nextUrl) {
+      window.history.pushState(null, '', nextUrl)
+    }
+  }, [])
 
   if (auth === 'loading') {
     return (
@@ -192,9 +137,9 @@ export function StudioApp() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f4ef] text-zinc-950 dark:bg-zinc-950 dark:text-zinc-100">
-      <div className="mx-auto grid min-h-screen max-w-[1680px] lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="border-b border-zinc-200 bg-white/80 p-5 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/80 lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:p-6">
+    <main className="min-h-screen max-w-full overflow-x-clip bg-[#f5f4ef] text-zinc-950 dark:bg-zinc-950 dark:text-zinc-100">
+      <div className="mx-auto grid min-h-screen w-full min-w-0 max-w-[1680px] grid-cols-[minmax(0,1fr)] lg:grid-cols-[260px_minmax(0,1fr)]">
+        <aside className="min-w-0 border-b border-zinc-200 bg-white/80 p-5 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/80 lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:p-6">
           <div className="flex items-center justify-between lg:block">
             <div>
               <div className="flex items-center gap-3">
@@ -203,9 +148,9 @@ export function StudioApp() {
                 </div>
                 <div>
                   <p className="text-sm font-black tracking-tight">
-                    MARLIN.LOG
+                    MARLIN.LOG 管理后台
                   </p>
-                  <p className="text-xs text-zinc-400">Content Studio</p>
+                  <p className="text-xs text-zinc-400">Taifost · Core v3</p>
                 </div>
               </div>
             </div>
@@ -221,7 +166,8 @@ export function StudioApp() {
             {navigation.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setSection(item.id)}
+                onClick={() => navigate(item.id)}
+                aria-current={section === item.id ? 'page' : undefined}
                 className={`flex min-w-0 items-center gap-3 rounded-2xl px-3 py-3 text-left transition ${
                   section === item.id
                     ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950'
@@ -252,10 +198,20 @@ export function StudioApp() {
             <div className="mb-3 flex items-center gap-2 text-xs text-zinc-400">
               <span
                 className={`size-2 rounded-full ${
-                  loading ? 'animate-pulse bg-amber-500' : 'bg-emerald-500'
+                  loading
+                    ? 'animate-pulse bg-amber-500'
+                    : loadFailures.length > 0
+                      ? 'bg-amber-500'
+                      : 'bg-emerald-500'
                 }`}
               />
-              <span>{loading ? '正在同步 Core' : 'Core v3 已连接'}</span>
+              <span>
+                {loading
+                  ? '正在同步 Core'
+                  : loadFailures.length > 0
+                    ? `${loadFailures.length} 个模块暂不可用`
+                    : 'Core v3 已连接'}
+              </span>
             </div>
             <div className="grid gap-2">
               <StudioButton tone="secondary" onClick={() => void load()}>
@@ -266,6 +222,9 @@ export function StudioApp() {
                 onClick={async () => {
                   await studioLogout().catch(() => null)
                   setPreviewToken(undefined)
+                  dataRef.current = emptyStudioData
+                  setData(emptyStudioData)
+                  setLoadFailures([])
                   setAuth('no')
                 }}
               >
@@ -277,7 +236,11 @@ export function StudioApp() {
 
         <div className="min-w-0 p-5 sm:p-8 lg:p-10 xl:p-12">
           {section === 'overview' && (
-            <Overview data={data} onNavigate={setSection} />
+            <OverviewSection
+              data={data}
+              failures={loadFailures}
+              onNavigate={navigate}
+            />
           )}
           {section === 'materials' && (
             <MaterialsSection
@@ -340,131 +303,5 @@ export function StudioApp() {
         </div>
       )}
     </main>
-  )
-}
-
-function Overview({
-  data,
-  onNavigate,
-}: {
-  data: StudioData
-  onNavigate: (section: Section) => void
-}) {
-  const pendingReviews = data.projects.filter(
-    ({ status }) => status === 'in_review',
-  ).length
-  const metrics = [
-    {
-      label: '冻结素材',
-      value: data.materials.length,
-      detail: `${data.materials.filter(({ status }) => status === 'ready').length} 条可用`,
-      section: 'materials' as Section,
-    },
-    {
-      label: '热点候选',
-      value: data.candidates.length,
-      detail: `${data.candidates.filter(({ status }) => status === 'selected').length} 条已选`,
-      section: 'hotspots' as Section,
-    },
-    {
-      label: '创作项目',
-      value: data.projects.length,
-      detail: `${data.projects.filter(({ status }) => status === 'published').length} 篇已发布`,
-      section: 'projects' as Section,
-    },
-    {
-      label: 'AI 角色',
-      value: data.roles.length,
-      detail: `共 7 个固定职责`,
-      section: 'ai' as Section,
-    },
-  ]
-
-  return (
-    <div className="grid gap-8">
-      <div className="max-w-3xl">
-        <p className="text-sm font-medium text-zinc-500">
-          {new Intl.DateTimeFormat('zh-CN', {
-            dateStyle: 'full',
-          }).format(new Date())}
-        </p>
-        <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">
-          让证据先于观点，
-          <br />
-          让批准先于发布。
-        </h1>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-500 dark:text-zinc-400">
-          素材冻结、热点采集、AI 协作、不可变修订、外部审阅和 Core
-          发布现在处在一条可追溯的内容流水线上。
-        </p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric) => (
-          <button
-            key={metric.label}
-            className="text-left"
-            onClick={() => onNavigate(metric.section)}
-          >
-            <StudioCard className="h-full transition hover:-translate-y-0.5 hover:border-zinc-400 hover:shadow-md dark:hover:border-zinc-600">
-              <p className="text-sm text-zinc-500">{metric.label}</p>
-              <p className="mt-3 text-4xl font-black">{metric.value}</p>
-              <p className="mt-2 text-xs text-zinc-400">{metric.detail}</p>
-            </StudioCard>
-          </button>
-        ))}
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <StudioCard>
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
-                PROJECTS
-              </p>
-              <h2 className="font-semibold">最近项目</h2>
-            </div>
-            <StudioButton tone="ghost" onClick={() => onNavigate('projects')}>
-              查看全部
-            </StudioButton>
-          </div>
-          <div className="grid gap-2">
-            {data.projects.slice(0, 6).map((project) => (
-              <div
-                key={project.id}
-                className="flex items-center justify-between gap-4 rounded-xl bg-zinc-50 px-4 py-3 dark:bg-zinc-950"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">
-                    {project.title}
-                  </p>
-                  <p className="mt-1 truncate text-xs text-zinc-400">
-                    {project.goal || '尚未填写目标'}
-                  </p>
-                </div>
-                <StatusPill value={project.status} />
-              </div>
-            ))}
-            {data.projects.length === 0 && (
-              <p className="py-10 text-center text-sm text-zinc-400">
-                还没有创作项目。
-              </p>
-            )}
-          </div>
-        </StudioCard>
-
-        <StudioCard className="bg-zinc-950 text-white dark:bg-white dark:text-zinc-950">
-          <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
-            REVIEW QUEUE
-          </p>
-          <p className="mt-4 text-5xl font-black">{pendingReviews}</p>
-          <p className="mt-2 text-sm text-zinc-400">个等待决策的审阅请求</p>
-          <div className="mt-8 space-y-3 text-sm leading-6 text-zinc-300 dark:text-zinc-600">
-            <p>审阅请求固定到一个不可变修订。</p>
-            <p>审阅通过不会自动发布，发布仍需所有者确认。</p>
-          </div>
-        </StudioCard>
-      </div>
-    </div>
   )
 }

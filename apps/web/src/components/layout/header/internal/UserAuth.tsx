@@ -126,13 +126,13 @@ export function UserAuth() {
                   <Fragment>
                     <DropdownMenuItem
                       onClick={() => {
-                        window.open('/dashboard', '_blank')
+                        window.open('/studio', '_blank')
                       }}
                       icon={
                         <i className="i-mingcute-dashboard-3-line size-4" />
                       }
                     >
-                      {t('auth_dashboard')}
+                      MARLIN 内容工作室
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => {

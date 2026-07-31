@@ -53,13 +53,33 @@ export function StudioLogin({
             M
           </div>
           <p className="text-xs font-bold tracking-[0.22em] text-zinc-400">
-            MARLIN.LOG
+            MARLIN.LOG · TAIFOST + CORE V3
           </p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight">内容工作室</h1>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight">
+            站主管理后台
+          </h1>
           <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
             使用 Core
             站点所有者账号登录。审阅、批准与发布在这里保持为三个独立动作。
           </p>
+        </div>
+
+        <div className="mb-7 grid grid-cols-3 gap-2 text-center text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+          {[
+            '素材与媒体',
+            '热点与 AI',
+            '修订与审核',
+            '页面与主题',
+            '发布与撤回',
+            '健康与备份',
+          ].map((capability) => (
+            <span
+              key={capability}
+              className="rounded-xl bg-zinc-100 px-2 py-2 dark:bg-zinc-800"
+            >
+              {capability}
+            </span>
+          ))}
         </div>
 
         <form className="grid gap-5" onSubmit={submit}>
@@ -88,7 +108,7 @@ export function StudioLogin({
             </p>
           )}
           <StudioButton className="mt-1 w-full" disabled={pending}>
-            {pending ? '正在登录…' : '进入工作室'}
+            {pending ? '正在登录…' : '进入管理后台'}
           </StudioButton>
         </form>
       </StudioCard>
