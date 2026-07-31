@@ -66,12 +66,12 @@ export function StudioLogin({
 
         <div className="mb-7 grid grid-cols-3 gap-2 text-center text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
           {[
-            '素材与媒体',
-            '热点与 AI',
+            '素材与热点',
+            '写作角色',
             '修订与审核',
-            '页面与主题',
+            '外观与导航',
             '发布与撤回',
-            '健康与备份',
+            '基础管理',
           ].map((capability) => (
             <span
               key={capability}

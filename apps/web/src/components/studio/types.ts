@@ -48,18 +48,6 @@ export interface Category {
   slug: string
 }
 
-export interface CorePage {
-  id: string
-  title: string
-  slug: string
-  subtitle?: string | null
-  text: string
-  content_format: 'markdown' | 'lexical'
-  order: number
-  created_at: string
-  modified_at?: string | null
-}
-
 export interface Revision {
   id: string
   version: number

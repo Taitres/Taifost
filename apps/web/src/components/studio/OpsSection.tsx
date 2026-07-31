@@ -255,9 +255,10 @@ export function OpsSection({
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-400">
             OPERATIONS
           </p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight">运维中心</h1>
+          <h1 className="mt-2 text-3xl font-black tracking-tight">运行保障</h1>
           <p className="mt-2 text-sm leading-6 text-zinc-500">
-            依赖健康、便携备份、任务失败和定时作业集中在这里。
+            这里负责 MARLIN 流水线的跨服务健康、便携备份和任务日志；Core
+            原生定时任务、备份与高级设置在“基础管理”中。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

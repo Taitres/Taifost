@@ -104,7 +104,11 @@ export function AiSection({
     <div className="grid gap-6">
       <div>
         <p className="text-sm text-zinc-500">固定职责 · 独立模型 · 每日预算</p>
-        <h2 className="text-2xl font-bold tracking-tight">AI 编辑部</h2>
+        <h2 className="text-2xl font-bold tracking-tight">写作角色</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">
+          这里只管理 MARLIN 流水线的固定写作职责；模型提供商、翻译、摘要等 Core
+          原生 AI 能力请在“基础管理”中配置。
+        </p>
       </div>
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <StudioCard>

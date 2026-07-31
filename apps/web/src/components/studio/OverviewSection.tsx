@@ -18,12 +18,9 @@ const featureGroups: Array<{
 }> = [
   {
     index: '01',
-    title: '素材入库',
-    description: '导入、冻结、去重、图片归档与内容分析',
-    sections: [
-      { id: 'materials', label: '素材库' },
-      { id: 'media', label: '媒体库' },
-    ],
+    title: '素材证据',
+    description: '导入、冻结、去重与内容分析，作为创作流水线的可追溯输入',
+    sections: [{ id: 'materials', label: '素材库' }],
   },
   {
     index: '02',
@@ -33,30 +30,33 @@ const featureGroups: Array<{
   },
   {
     index: '03',
-    title: 'AI 协作',
-    description: '配置固定职责、预算和选中段落改写',
-    sections: [{ id: 'ai', label: 'AI 编辑部' }],
-  },
-  {
-    index: '04',
-    title: '修订与审核',
-    description: '工作副本、不可变版本、外部审阅与显式发布',
-    sections: [{ id: 'projects', label: '创作项目' }],
-  },
-  {
-    index: '05',
-    title: '站点内容',
-    description: '独立页面、导航、三套主题、时区与 SEO',
+    title: '创作与协作',
+    description: '组织工作副本、写作角色、不可变版本和外部审阅',
     sections: [
-      { id: 'pages', label: '独立页面' },
-      { id: 'settings', label: '站点设置' },
+      { id: 'projects', label: '创作项目' },
+      { id: 'ai', label: '写作角色' },
     ],
   },
   {
-    index: '06',
+    index: '04',
+    title: '展示与运营',
+    description: 'OpenList 媒体归档、Shiro 主题、导航、时区与 SEO',
+    sections: [
+      { id: 'media', label: '媒体归档' },
+      { id: 'settings', label: '外观与导航' },
+    ],
+  },
+  {
+    index: '05',
     title: '运行保障',
-    description: '健康检查、便携备份、任务日志与定时任务',
-    sections: [{ id: 'ops', label: '运维中心' }],
+    description: '检查 MARLIN 内容流水线与跨服务依赖，执行便携备份',
+    sections: [{ id: 'ops', label: '运行保障' }],
+  },
+  {
+    index: '06',
+    title: '基础管理',
+    description: '原生文章、手记、页面、评论、友链、文件及 Core 高级设置',
+    sections: [{ id: 'core', label: '进入 MX Space' }],
   },
 ]
 
@@ -67,7 +67,6 @@ const sectionFailureKeys: Partial<
   media: ['media'],
   hotspots: ['themes', 'sources', 'candidates'],
   projects: ['projects', 'categories'],
-  pages: ['pages'],
   ai: ['roles'],
   settings: ['siteTimezone'],
 }
@@ -105,7 +104,7 @@ export function OverviewSection({
       section: 'projects',
     },
     {
-      label: 'AI 角色',
+      label: '写作角色',
       value: data.roles.length,
       detail: '共 7 个固定职责',
       section: 'ai',
@@ -138,8 +137,8 @@ export function OverviewSection({
           让批准先于发布。
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-500 dark:text-zinc-400">
-          素材冻结、热点采集、AI 协作、不可变修订、外部审阅和 Core
-          发布现在处在一条可追溯的内容流水线上。
+          MARLIN 负责素材到发布的可追溯内容流水线；MX Space
+          基础管理负责原生内容、互动、资源与 Core 系统设置。
         </p>
       </div>
 

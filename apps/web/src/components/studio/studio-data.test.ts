@@ -15,7 +15,6 @@ const responses: Record<string, unknown> = {
   '/marlin/hotspots/candidates?page=1&size=100': [],
   '/marlin/ai/roles': [],
   '/categories?page=1&size=100': [],
-  '/pages?page=1&size=100': [],
   '/snippets/by-path?path=theme%2Fshiro': {
     raw: JSON.stringify({
       config: { presentation: { timezone: 'Asia/Shanghai' } },

@@ -5,6 +5,9 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-http://mirrors.aliyun.com/debian}
+        DEBIAN_SECURITY_MIRROR: ${DEBIAN_SECURITY_MIRROR:-http://mirrors.aliyun.com/debian-security}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
         NEXT_PUBLIC_API_URL: ${CORE_API_URL:-http://127.0.0.1:2334/api/v3}
         NEXT_PUBLIC_GATEWAY_URL: ${CORE_GATEWAY_URL:-https://api.taitres.com}
     container_name: marlin-shiro-v3

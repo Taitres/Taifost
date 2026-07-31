@@ -5,6 +5,8 @@ import { readStudioSection, studioSectionUrl } from './studio-navigation'
 describe('Studio navigation', () => {
   it('accepts only registered section names', () => {
     expect(readStudioSection('?section=projects')).toBe('projects')
+    expect(readStudioSection('?section=core')).toBe('core')
+    expect(readStudioSection('', '#/posts/edit?id=post-1')).toBe('core')
     expect(readStudioSection('?section=unknown')).toBe('overview')
     expect(readStudioSection('')).toBe('overview')
   })
@@ -16,7 +18,7 @@ describe('Studio navigation', () => {
     expect(
       studioSectionUrl(
         'overview',
-        'https://www.taitres.com/studio?foo=bar&section=projects',
+        'https://www.taitres.com/studio?foo=bar&section=projects#/posts',
       ),
     ).toBe('/studio?foo=bar')
   })

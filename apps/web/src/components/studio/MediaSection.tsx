@@ -14,7 +14,7 @@ export function MediaSection({ media }: { media: MediaAsset[] }) {
           <p className="text-sm text-zinc-500">
             OpenList 归档、引用关系与失败状态
           </p>
-          <h2 className="text-2xl font-bold tracking-tight">媒体库</h2>
+          <h2 className="text-2xl font-bold tracking-tight">媒体归档</h2>
         </div>
         <p className="text-sm text-zinc-500">
           {media.length} 个文件 · {unused} 个未使用 · {unresolved} 个待处理
@@ -34,7 +34,6 @@ export function MediaSection({ media }: { media: MediaAsset[] }) {
             >
               {asset.archived_url ? (
                 // OpenList public URLs are intentionally rendered directly.
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={asset.archived_url}
                   alt=""

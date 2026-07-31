@@ -4,7 +4,6 @@ import { StudioApiError } from '~/lib/studio-api'
 import type {
   AiRole,
   Category,
-  CorePage,
   HotspotCandidate,
   HotspotSource,
   HotspotTheme,
@@ -22,7 +21,6 @@ export interface StudioData {
   candidates: HotspotCandidate[]
   roles: AiRole[]
   categories: Category[]
-  pages: CorePage[]
   siteTimezone: string
 }
 
@@ -35,7 +33,6 @@ export type StudioDataKey =
   | 'candidates'
   | 'roles'
   | 'categories'
-  | 'pages'
   | 'siteTimezone'
 
 export interface StudioLoadFailure {
@@ -60,7 +57,6 @@ export const emptyStudioData: StudioData = {
   candidates: [],
   roles: [],
   categories: [],
-  pages: [],
   siteTimezone: DEFAULT_SITE_TIMEZONE,
 }
 
@@ -74,7 +70,7 @@ const modules: Array<{
     label: '素材库',
     path: '/marlin/materials?page=1&size=100',
   },
-  { key: 'media', label: '媒体库', path: '/marlin/materials/media' },
+  { key: 'media', label: '媒体归档', path: '/marlin/materials/media' },
   {
     key: 'projects',
     label: '创作项目',
@@ -93,7 +89,6 @@ const modules: Array<{
     label: '文章分类',
     path: '/categories?page=1&size=100',
   },
-  { key: 'pages', label: '独立页面', path: '/pages?page=1&size=100' },
   {
     key: 'siteTimezone',
     label: '站点时区',
@@ -153,9 +148,6 @@ const assignModuleValue = (
       break
     case 'categories':
       data.categories = readList<Category>(value)
-      break
-    case 'pages':
-      data.pages = readList<CorePage>(value)
       break
     case 'siteTimezone':
       data.siteTimezone = readTimezone(value)

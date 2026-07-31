@@ -114,7 +114,7 @@ export function SettingsSection({
       })
       .catch((error) => {
         notify(
-          error instanceof Error ? error.message : '站点设置加载失败',
+          error instanceof Error ? error.message : '外观与导航加载失败',
           true,
         )
       })
@@ -215,9 +215,12 @@ export function SettingsSection({
       await fetch('/api/theme-preview', { method: 'DELETE' })
       setStoredConfig(next)
       await reload()
-      notify('站点设置已发布，聚合缓存正在刷新')
+      notify('外观与导航已发布，聚合缓存正在刷新')
     } catch (error) {
-      notify(error instanceof Error ? error.message : '站点设置保存失败', true)
+      notify(
+        error instanceof Error ? error.message : '外观与导航保存失败',
+        true,
+      )
     } finally {
       setPending(false)
     }
@@ -268,7 +271,7 @@ export function SettingsSection({
         <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
           SITE PRESENTATION
         </p>
-        <h2 className="mt-1 text-3xl font-black tracking-tight">站点设置</h2>
+        <h2 className="mt-1 text-3xl font-black tracking-tight">外观与导航</h2>
         <p className="mt-2 text-sm leading-7 text-zinc-500 dark:text-zinc-400">
           主题与明暗模式相互独立。临时预览仅对已登录的站长生效，不会影响访客；
           发布后 Core 会清理聚合缓存并把选择同步到所有公开页面。
@@ -638,7 +641,7 @@ export function SettingsSection({
           </p>
         </div>
         <StudioButton disabled={pending} onClick={() => void save()}>
-          {pending ? '正在发布…' : '发布全部站点设置'}
+          {pending ? '正在发布…' : '发布全部外观与导航设置'}
         </StudioButton>
       </StudioCard>
     </div>

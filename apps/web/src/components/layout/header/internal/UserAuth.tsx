@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl'
 import type { CSSProperties } from 'react'
 import { Fragment } from 'react'
 
-import { getAdminUrl } from '~/atoms'
 import { useIsOwnerLogged } from '~/atoms/hooks/owner'
 import { useSessionReader } from '~/atoms/hooks/reader'
 import { useIsMobile } from '~/atoms/hooks/viewport'
@@ -126,26 +125,13 @@ export function UserAuth() {
                   <Fragment>
                     <DropdownMenuItem
                       onClick={() => {
-                        window.open('/studio', '_blank')
+                        window.open('/dashboard', '_blank')
                       }}
                       icon={
                         <i className="i-mingcute-dashboard-3-line size-4" />
                       }
                     >
-                      MARLIN 内容工作室
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        const adminUrl = getAdminUrl()
-                        if (adminUrl) {
-                          window.open(adminUrl, '_blank')
-                        }
-                      }}
-                      icon={
-                        <i className="i-mingcute-dashboard-2-line size-4" />
-                      }
-                    >
-                      {t('auth_console')}
+                      统一管理后台
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </Fragment>
