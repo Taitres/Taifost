@@ -67,13 +67,13 @@ const modules: Array<{
 }> = [
   {
     key: 'materials',
-    label: '素材库',
+    label: '素材记录',
     path: '/marlin/materials?page=1&size=100',
   },
   { key: 'media', label: '媒体归档', path: '/marlin/materials/media' },
   {
     key: 'projects',
-    label: '创作项目',
+    label: '文章草稿',
     path: '/marlin/projects?page=1&size=100',
   },
   { key: 'themes', label: '热点主题', path: '/marlin/hotspots/themes' },

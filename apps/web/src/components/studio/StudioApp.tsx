@@ -10,12 +10,12 @@ import {
 } from '~/lib/studio-api'
 
 import { AiSection } from './AiSection'
+import { ComposeSection } from './ComposeSection'
 import { HotspotsSection } from './HotspotsSection'
 import { MaterialsSection } from './MaterialsSection'
 import { MediaSection } from './MediaSection'
 import { NativeConsoleSection } from './NativeConsoleSection'
 import { OpsSection } from './OpsSection'
-import { OverviewSection } from './OverviewSection'
 import { StudioButton } from './primitives'
 import { ProjectsSection } from './ProjectsSection'
 import { SettingsSection } from './SettingsSection'
@@ -36,6 +36,7 @@ export function StudioApp() {
   const [previewToken, setPreviewToken] = useState<string>()
   const [section, setSection] = useState<Section>('overview')
   const [nativeHash, setNativeHash] = useState('')
+  const [focusedProjectId, setFocusedProjectId] = useState('')
   const [data, setData] = useState<StudioData>(emptyStudioData)
   const dataRef = useRef<StudioData>(emptyStudioData)
   const [loadFailures, setLoadFailures] = useState<StudioLoadFailure[]>([])
@@ -304,10 +305,14 @@ export function StudioApp() {
 
         <div className="min-w-0 p-5 sm:p-8 lg:p-10 xl:p-12">
           {section === 'overview' && (
-            <OverviewSection
-              data={data}
-              failures={loadFailures}
-              onNavigate={navigate}
+            <ComposeSection
+              projects={data.projects}
+              reload={load}
+              notify={notify}
+              onCreated={(projectId) => {
+                setFocusedProjectId(projectId)
+                navigate('projects')
+              }}
             />
           )}
           {section === 'materials' && (
@@ -333,6 +338,8 @@ export function StudioApp() {
               materials={data.materials}
               categories={data.categories}
               timezone={data.siteTimezone}
+              focusedProjectId={focusedProjectId}
+              onStartNew={() => navigate('overview')}
               reload={load}
               notify={notify}
             />

@@ -104,23 +104,24 @@ export function MaterialsSection({
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid gap-6">
       <section className="grid content-start gap-4">
         <div>
-          <p className="text-sm text-zinc-500">冻结、去重、保留导入证据</p>
-          <h2 className="text-2xl font-bold tracking-tight">素材库</h2>
+          <p className="text-sm text-zinc-500">
+            AI 创作时自动保存的来源与证据，通常不需要操作
+          </p>
+          <h2 className="text-2xl font-bold tracking-tight">素材记录</h2>
         </div>
         {materials.length === 0 ? (
-          <StudioEmpty>还没有素材，从右侧导入第一条内容。</StudioEmpty>
+          <StudioEmpty>
+            还没有素材。去“开始创作”粘贴链接或 Markdown 即可。
+          </StudioEmpty>
         ) : (
           materials.map((material) => (
             <StudioCard key={material.id} className="grid gap-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h3 className="truncate font-semibold">{material.title}</h3>
-                  <p className="mt-1 font-mono text-xs text-zinc-400">
-                    SHA-256 {material.content_hash.slice(0, 16)}…
-                  </p>
                 </div>
                 <StatusPill value={material.status} />
               </div>
@@ -180,50 +181,23 @@ export function MaterialsSection({
                     ))}
                 </div>
               )}
-              <div className="flex items-center justify-between text-xs text-zinc-400">
-                <span>
-                  {material.kind} · {material.byte_size} bytes
-                </span>
-                <div className="flex gap-1">
-                  {material.status !== 'archived' && (
-                    <>
-                      <StudioButton
-                        tone="ghost"
-                        className="min-h-8 px-2 py-1 text-xs"
-                        onClick={async () => {
-                          try {
-                            await studioRequest(
-                              `/marlin/materials/${material.id}/analyze`,
-                              {
-                                method: 'POST',
-                                body: studioJson({
-                                  force: false,
-                                  archive_images: true,
-                                }),
-                              },
-                            )
-                            notify('分析完成；图片归档结果已写入素材')
-                            await reload()
-                          } catch (error) {
-                            notify(
-                              error instanceof Error
-                                ? error.message
-                                : '分析失败',
-                              true,
-                            )
-                          }
-                        }}
-                      >
-                        {material.status === 'pending'
-                          ? '重试图片并分析'
-                          : material.analysis
-                            ? '查看分析'
-                            : '分析'}
-                      </StudioButton>
-                      {material.status === 'pending' && (
+              <details className="rounded-xl border border-zinc-100 px-3 py-2 text-xs dark:border-zinc-800">
+                <summary className="cursor-pointer font-semibold text-zinc-500">
+                  来源详情与处理工具
+                </summary>
+                <div className="mt-3 grid gap-3 text-zinc-400">
+                  <p className="break-all font-mono">
+                    SHA-256 {material.content_hash}
+                  </p>
+                  <p>
+                    {material.kind} · {material.byte_size} bytes
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {material.status !== 'archived' && (
+                      <>
                         <StudioButton
                           tone="ghost"
-                          className="min-h-8 px-2 py-1 text-xs text-amber-700 dark:text-amber-300"
+                          className="min-h-8 px-2 py-1 text-xs"
                           onClick={async () => {
                             try {
                               await studioRequest(
@@ -231,67 +205,101 @@ export function MaterialsSection({
                                 {
                                   method: 'POST',
                                   body: studioJson({
-                                    force: true,
-                                    archive_images: false,
-                                    ignore_failed_images: true,
+                                    force: false,
+                                    archive_images: true,
                                   }),
                                 },
                               )
-                              notify('已明确忽略远程图片，素材可进入创作')
+                              notify('分析完成；图片归档结果已写入素材')
                               await reload()
                             } catch (error) {
                               notify(
                                 error instanceof Error
                                   ? error.message
-                                  : '忽略失败',
+                                  : '分析失败',
                                 true,
                               )
                             }
                           }}
                         >
-                          忽略图片并继续
+                          {material.status === 'pending'
+                            ? '重试图片并分析'
+                            : '重新分析'}
                         </StudioButton>
-                      )}
-                      <StudioButton
-                        tone="ghost"
-                        className="min-h-8 px-2 py-1 text-xs"
-                        onClick={async () => {
-                          try {
-                            await studioRequest(
-                              `/marlin/materials/${material.id}/archive`,
-                              { method: 'POST' },
-                            )
-                            notify('素材已归档，原始内容仍保留')
-                            await reload()
-                          } catch (error) {
-                            notify(
-                              error instanceof Error
-                                ? error.message
-                                : '归档失败',
-                              true,
-                            )
-                          }
-                        }}
-                      >
-                        归档
-                      </StudioButton>
-                    </>
-                  )}
+                        {material.status === 'pending' && (
+                          <StudioButton
+                            tone="ghost"
+                            className="min-h-8 px-2 py-1 text-xs text-amber-700 dark:text-amber-300"
+                            onClick={async () => {
+                              try {
+                                await studioRequest(
+                                  `/marlin/materials/${material.id}/analyze`,
+                                  {
+                                    method: 'POST',
+                                    body: studioJson({
+                                      force: true,
+                                      archive_images: false,
+                                      ignore_failed_images: true,
+                                    }),
+                                  },
+                                )
+                                notify('已明确忽略远程图片，素材可进入创作')
+                                await reload()
+                              } catch (error) {
+                                notify(
+                                  error instanceof Error
+                                    ? error.message
+                                    : '忽略失败',
+                                  true,
+                                )
+                              }
+                            }}
+                          >
+                            忽略图片并继续
+                          </StudioButton>
+                        )}
+                        <StudioButton
+                          tone="ghost"
+                          className="min-h-8 px-2 py-1 text-xs"
+                          onClick={async () => {
+                            try {
+                              await studioRequest(
+                                `/marlin/materials/${material.id}/archive`,
+                                { method: 'POST' },
+                              )
+                              notify('素材已归档，原始内容仍保留')
+                              await reload()
+                            } catch (error) {
+                              notify(
+                                error instanceof Error
+                                  ? error.message
+                                  : '归档失败',
+                                true,
+                              )
+                            }
+                          }}
+                        >
+                          归档
+                        </StudioButton>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </details>
             </StudioCard>
           ))
         )}
       </section>
 
-      <StudioCard className="sticky top-6 grid h-fit gap-4">
-        <div>
-          <h3 className="font-semibold">导入素材</h3>
-          <p className="mt-1 text-xs leading-5 text-zinc-500">
-            当前支持 Markdown、HTML、JSON、纯文本与公开链接正文。
-          </p>
-        </div>
-        <form className="grid gap-4" onSubmit={submit}>
+      <details className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <summary className="cursor-pointer font-semibold">
+          高级：手动导入其他格式
+        </summary>
+        <p className="mt-2 text-xs leading-5 text-zinc-500">
+          链接和 Markdown 请直接从“开始创作”导入。这里保留
+          HTML、JSON、纯文本等特殊来源的手动入口。
+        </p>
+        <form className="mt-5 grid gap-4" onSubmit={submit}>
           <StudioLabel label="标题">
             <StudioInput
               value={form.title}
@@ -395,7 +403,7 @@ export function MaterialsSection({
             {pending ? '正在导入…' : '冻结并导入'}
           </StudioButton>
         </form>
-      </StudioCard>
+      </details>
     </div>
   )
 }

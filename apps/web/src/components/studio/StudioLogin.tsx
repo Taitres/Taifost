@@ -59,19 +59,19 @@ export function StudioLogin({
             站主管理后台
           </h1>
           <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-            使用 Core
-            站点所有者账号登录。审阅、批准与发布在这里保持为三个独立动作。
+            使用 Core 站点所有者账号登录。粘贴链接或 Markdown，AI
+            会直接交付可编辑的文章初稿。
           </p>
         </div>
 
         <div className="mb-7 grid grid-cols-3 gap-2 text-center text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
           {[
-            '素材与热点',
-            '写作角色',
-            '修订与审核',
-            '外观与导航',
-            '发布与撤回',
-            '基础管理',
+            '链接自动抓取',
+            'Markdown 成稿',
+            'AI 自动补全',
+            '随时修改',
+            '一键发布',
+            '高级功能可选',
           ].map((capability) => (
             <span
               key={capability}

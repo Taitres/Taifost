@@ -30,39 +30,48 @@ export interface StudioNavigationGroup {
  */
 export const studioNavigationGroups: StudioNavigationGroup[] = [
   {
-    label: '内容生产',
+    label: '写作',
     items: [
-      { id: 'overview', label: '总览', description: '今日状态', icon: '⌁' },
       {
-        id: 'materials',
-        label: '素材库',
-        description: '冻结与证据',
-        icon: '◫',
-      },
-      {
-        id: 'hotspots',
-        label: '热点雷达',
-        description: '采集与筛选',
-        icon: '⌖',
+        id: 'overview',
+        label: '开始创作',
+        description: '粘贴即可成稿',
+        icon: '⌁',
       },
       {
         id: 'projects',
-        label: '创作项目',
-        description: '修订与发布',
+        label: '文章草稿',
+        description: '编辑与发布',
         icon: '✎',
       },
-      { id: 'ai', label: '写作角色', description: '职责与预算', icon: '✦' },
+      {
+        id: 'hotspots',
+        label: '热点灵感',
+        description: '发现可写主题',
+        icon: '⌖',
+      },
     ],
   },
   {
-    label: '展示与运营',
+    label: '内容记录',
     items: [
+      {
+        id: 'materials',
+        label: '素材记录',
+        description: '来源与分析',
+        icon: '◫',
+      },
       {
         id: 'media',
         label: '媒体归档',
-        description: 'OpenList 归档',
+        description: '自动保存的图片',
         icon: '▧',
       },
+    ],
+  },
+  {
+    label: '站点',
+    items: [
       {
         id: 'settings',
         label: '外观与导航',
@@ -72,9 +81,10 @@ export const studioNavigationGroups: StudioNavigationGroup[] = [
     ],
   },
   {
-    label: '系统与基础管理',
+    label: '高级工具',
     items: [
-      { id: 'ops', label: '运行保障', description: '流水线健康', icon: '◉' },
+      { id: 'ai', label: '写作角色', description: '高级 AI 设置', icon: '✦' },
+      { id: 'ops', label: '运行保障', description: '服务健康', icon: '◉' },
       {
         id: 'core',
         label: '基础管理',
