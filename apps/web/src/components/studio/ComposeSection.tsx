@@ -11,21 +11,38 @@ import {
   StudioCard,
   StudioTextArea,
 } from './primitives'
-import type { Project } from './types'
+import type { AiConfig, Project } from './types'
 
 interface ComposeResult {
   project: Project
   revision: { id: string; title: string }
   deduplicated: boolean
   ignored_images?: number
-  generation_mode?: 'ai' | 'local'
+  generation_mode: 'ai'
+  pipeline: Array<{
+    key: string
+    label: string
+    duration_ms: number
+    model: string
+    total_tokens: number
+  }>
+  review: {
+    verdict: 'pass' | 'needs-review' | 'revise'
+    issues: unknown[]
+    notes: string[]
+    remaining_risks: string[]
+  }
 }
 
 const progressSteps = [
   '读取来源',
-  '归档图片与分析内容',
-  'AI 组织结构与元数据',
-  '生成可编辑初稿',
+  '归档图片',
+  '分析素材',
+  '规划文章',
+  '撰写成稿',
+  '核验事实',
+  '终审修订',
+  '整理发布信息',
 ]
 
 const statusLabel = (status: string) =>
@@ -43,15 +60,19 @@ const statusLabel = (status: string) =>
   )[status] || status
 
 export function ComposeSection({
+  aiConfig,
   projects,
   reload,
   notify,
   onCreated,
+  onConfigureAi,
 }: {
+  aiConfig: AiConfig
   projects: Project[]
   reload: () => Promise<void>
   notify: (message: string, error?: boolean) => void
   onCreated: (projectId: string) => void
+  onConfigureAi: () => void
 }) {
   const [source, setSource] = useState('')
   const [instruction, setInstruction] = useState('')
@@ -63,13 +84,12 @@ export function ComposeSection({
       setStep(0)
       return
     }
-    const readTimer = window.setTimeout(() => setStep(1), 1_800)
-    const analyzeTimer = window.setTimeout(() => setStep(2), 6_000)
-    const draftTimer = window.setTimeout(() => setStep(3), 14_000)
+    const timer = window.setInterval(
+      () => setStep((value) => Math.min(value + 1, progressSteps.length - 1)),
+      8_000,
+    )
     return () => {
-      window.clearTimeout(readTimer)
-      window.clearTimeout(analyzeTimer)
-      window.clearTimeout(draftTimer)
+      window.clearInterval(timer)
     }
   }, [pending])
 
@@ -86,12 +106,14 @@ export function ComposeSection({
         }),
       })
       await reload()
+      const riskCount =
+        result.review.issues.length + result.review.remaining_risks.length
       notify(
-        result.generation_mode === 'local'
-          ? '初稿已完成；当前使用本地智能整理，配置 AI 后会自动升级为完整改写'
+        riskCount > 0
+          ? `完整成稿已生成，AI 标记了 ${riskCount} 项供你审查`
           : result.ignored_images
-            ? `初稿已完成；${result.ignored_images} 张无法归档的图片已自动跳过`
-            : '初稿已完成，现在只需检查和发布',
+            ? `完整成稿已生成；${result.ignored_images} 张无法归档的图片已自动跳过`
+            : `六阶段流水线已完成，现在只需检查和发布`,
       )
       setSource('')
       setInstruction('')
@@ -107,8 +129,14 @@ export function ComposeSection({
     <div className="grid gap-10">
       <section className="mx-auto w-full max-w-5xl pt-3 sm:pt-8">
         <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex rounded-full bg-zinc-950 px-3 py-1 text-xs font-bold text-white dark:bg-white dark:text-zinc-950">
-            个人创作模式
+          <span
+            className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
+              aiConfig.ready
+                ? 'bg-emerald-600 text-white'
+                : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200'
+            }`}
+          >
+            {aiConfig.ready ? 'AI 流水线已就绪' : '需要先配置一次 AI'}
           </span>
           <h1 className="mt-5 text-4xl font-black tracking-tight sm:text-6xl">
             给我一条链接，
@@ -120,6 +148,11 @@ export function ComposeSection({
             Markdown。系统会自动抓取、归档图片、理解内容、生成标题、
             摘要、分类、标签和完整初稿。
           </p>
+          {!aiConfig.ready && (
+            <StudioButton className="mt-5 rounded-2xl" onClick={onConfigureAi}>
+              配置 AI，之后全部自动 →
+            </StudioButton>
+          )}
         </div>
 
         <StudioCard className="mx-auto mt-8 max-w-4xl border-zinc-300 p-3 shadow-xl shadow-zinc-200/50 dark:border-zinc-700 dark:shadow-black/20 sm:p-5">
@@ -143,7 +176,7 @@ export function ComposeSection({
 
             {pending ? (
               <div className="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-950">
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
                   {progressSteps.map((label, index) => (
                     <div key={label} className="min-w-0">
                       <div
@@ -166,7 +199,7 @@ export function ComposeSection({
                   ))}
                 </div>
                 <p className="mt-3 text-sm font-medium">
-                  {progressSteps[step]}……较长的来源可能需要一两分钟
+                  {progressSteps[step]}……系统会自动完成全部阶段，请勿关闭页面
                 </p>
               </div>
             ) : (
@@ -206,9 +239,9 @@ export function ComposeSection({
                 </div>
                 <StudioButton
                   className="min-w-36 rounded-2xl"
-                  disabled={!source.trim()}
+                  disabled={!source.trim() || !aiConfig.ready}
                 >
-                  生成可编辑初稿 →
+                  一键生成完整文章 →
                 </StudioButton>
               </div>
             )}
@@ -226,7 +259,7 @@ export function ComposeSection({
               <h2 className="mt-1 text-xl font-bold">最近的文章</h2>
             </div>
             <p className="text-xs text-zinc-400">
-              随时继续编辑，不需要提前配置
+              生成后只需审查、简单修改和发布
             </p>
           </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

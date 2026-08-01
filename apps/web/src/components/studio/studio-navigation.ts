@@ -81,9 +81,14 @@ export const studioNavigationGroups: StudioNavigationGroup[] = [
     ],
   },
   {
-    label: '高级工具',
+    label: '系统',
     items: [
-      { id: 'ai', label: '写作角色', description: '高级 AI 设置', icon: '✦' },
+      {
+        id: 'ai',
+        label: 'AI 配置中心',
+        description: '统一模型与流水线',
+        icon: '✦',
+      },
       { id: 'ops', label: '运行保障', description: '服务健康', icon: '◉' },
       {
         id: 'core',

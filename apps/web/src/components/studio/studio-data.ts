@@ -2,6 +2,7 @@ import { DEFAULT_SITE_TIMEZONE } from '~/lib/site-timezone'
 import { StudioApiError } from '~/lib/studio-api'
 
 import type {
+  AiConfig,
   AiRole,
   Category,
   HotspotCandidate,
@@ -20,6 +21,7 @@ export interface StudioData {
   sources: HotspotSource[]
   candidates: HotspotCandidate[]
   roles: AiRole[]
+  aiConfig: AiConfig
   categories: Category[]
   siteTimezone: string
 }
@@ -32,6 +34,7 @@ export type StudioDataKey =
   | 'sources'
   | 'candidates'
   | 'roles'
+  | 'aiConfig'
   | 'categories'
   | 'siteTimezone'
 
@@ -56,6 +59,12 @@ export const emptyStudioData: StudioData = {
   sources: [],
   candidates: [],
   roles: [],
+  aiConfig: {
+    ready: false,
+    providers: [],
+    assignments: {},
+    roles: [],
+  },
   categories: [],
   siteTimezone: DEFAULT_SITE_TIMEZONE,
 }
@@ -84,6 +93,11 @@ const modules: Array<{
     path: '/marlin/hotspots/candidates?page=1&size=100',
   },
   { key: 'roles', label: 'AI 角色', path: '/marlin/ai/roles' },
+  {
+    key: 'aiConfig',
+    label: 'AI 配置中心',
+    path: '/marlin/ai/config',
+  },
   {
     key: 'categories',
     label: '文章分类',
@@ -119,6 +133,13 @@ const readList = <T>(value: unknown): T[] => {
   return value as T[]
 }
 
+const readAiConfig = (value: unknown): AiConfig => {
+  if (!value || typeof value !== 'object' || !('providers' in value)) {
+    throw new TypeError('Core 返回了无效的 AI 配置')
+  }
+  return value as AiConfig
+}
+
 const assignModuleValue = (
   data: StudioData,
   key: StudioDataKey,
@@ -145,6 +166,9 @@ const assignModuleValue = (
       break
     case 'roles':
       data.roles = readList<AiRole>(value)
+      break
+    case 'aiConfig':
+      data.aiConfig = readAiConfig(value)
       break
     case 'categories':
       data.categories = readList<Category>(value)

@@ -306,6 +306,7 @@ export function StudioApp() {
         <div className="min-w-0 p-5 sm:p-8 lg:p-10 xl:p-12">
           {section === 'overview' && (
             <ComposeSection
+              aiConfig={data.aiConfig}
               projects={data.projects}
               reload={load}
               notify={notify}
@@ -313,6 +314,7 @@ export function StudioApp() {
                 setFocusedProjectId(projectId)
                 navigate('projects')
               }}
+              onConfigureAi={() => navigate('ai')}
             />
           )}
           {section === 'materials' && (
@@ -345,12 +347,7 @@ export function StudioApp() {
             />
           )}
           {section === 'ai' && (
-            <AiSection
-              roles={data.roles}
-              projects={data.projects}
-              reload={load}
-              notify={notify}
-            />
+            <AiSection config={data.aiConfig} reload={load} notify={notify} />
           )}
           {section === 'ops' && <OpsSection notify={notify} />}
           {section === 'settings' && (

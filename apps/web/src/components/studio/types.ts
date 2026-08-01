@@ -57,6 +57,32 @@ export interface Revision {
   content: string
   category_id: string
   tags: string[]
+  metadata?: {
+    generation?: {
+      mode?: string
+      total_tokens?: number
+      models?: string[]
+      stages?: Array<{
+        key: string
+        label: string
+        duration_ms: number
+        provider_id: string
+        model: string
+        total_tokens: number
+      }>
+      review?: {
+        verdict: 'pass' | 'needs-review' | 'revise'
+        issues: Array<{
+          severity: 'low' | 'medium' | 'high'
+          claim: string
+          reason: string
+          suggestion: string
+        }>
+        notes: string[]
+        remaining_risks: string[]
+      }
+    }
+  }
   created_at: string
 }
 
@@ -135,4 +161,50 @@ export interface AiRole {
   max_tokens: number
   daily_budget_cents: number
   enabled: boolean
+}
+
+export type AiProviderType = 'openai-compatible' | 'anthropic' | 'generic'
+
+export interface AiProvider {
+  id: string
+  name: string
+  type: AiProviderType
+  api_key: string
+  endpoint?: string
+  model_list_url?: string
+  append_v1?: boolean
+  default_model: string
+  enabled: boolean
+  context_window?: number | null
+  max_tokens?: number | null
+  credential_configured?: boolean
+}
+
+export interface AiAssignment {
+  provider_id: string
+  model: string
+}
+
+export type AiTaskKey =
+  | 'material_analysis'
+  | 'topic_planning'
+  | 'writing'
+  | 'quick_rewrite'
+  | 'review'
+  | 'fact_check'
+  | 'seo'
+  | 'summary'
+  | 'comment_review'
+  | 'translation'
+  | 'translation_review'
+  | 'insights'
+  | 'insights_translation'
+
+export interface AiConfig {
+  ready: boolean
+  default_provider_id?: string
+  default_model?: string
+  providers: AiProvider[]
+  assignments: Partial<Record<AiTaskKey, AiAssignment>>
+  roles: AiRole[]
 }

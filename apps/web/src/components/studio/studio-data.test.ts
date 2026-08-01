@@ -14,6 +14,12 @@ const responses: Record<string, unknown> = {
   '/marlin/hotspots/sources': [],
   '/marlin/hotspots/candidates?page=1&size=100': [],
   '/marlin/ai/roles': [],
+  '/marlin/ai/config': {
+    ready: false,
+    providers: [],
+    assignments: {},
+    roles: [],
+  },
   '/categories?page=1&size=100': [],
   '/snippets/by-path?path=theme%2Fshiro': {
     raw: JSON.stringify({

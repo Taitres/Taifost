@@ -190,6 +190,10 @@ export function ProjectsSection({
     () => Boolean(form.content) && snapshot(form) !== savedSnapshot,
     [form, savedSnapshot],
   )
+  const generation = project?.revisions?.[0]?.metadata?.generation
+  const aiReview = generation?.review
+  const reviewRiskCount =
+    (aiReview?.issues.length || 0) + (aiReview?.remaining_risks.length || 0)
 
   const save = async (quiet = false) => {
     if (!project) return null
@@ -349,6 +353,57 @@ export function ProjectsSection({
                 )}
               </div>
             </header>
+
+            {generation?.mode === 'ai-pipeline' && (
+              <StudioCard
+                className={`grid gap-3 border-l-4 ${
+                  reviewRiskCount > 0
+                    ? 'border-l-amber-500'
+                    : 'border-l-emerald-500'
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">
+                      {`AI 已完成 ${generation.stages?.length || 6} 阶段流水线`}
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      已自动分析、规划、写作、事实核验、终审和整理发布信息
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-bold ${
+                      reviewRiskCount > 0
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-200'
+                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200'
+                    }`}
+                  >
+                    {reviewRiskCount > 0
+                      ? `${reviewRiskCount} 项需要你留意`
+                      : '未发现待处理风险'}
+                  </span>
+                </div>
+                {aiReview && reviewRiskCount > 0 && (
+                  <details className="rounded-xl bg-amber-50 p-3 text-sm dark:bg-amber-950/30">
+                    <summary className="cursor-pointer font-semibold">
+                      查看 AI 审查提示
+                    </summary>
+                    <ul className="mt-3 list-inside list-disc space-y-2 text-amber-900 dark:text-amber-100">
+                      {aiReview.issues.map((issue) => (
+                        <li
+                          key={`${issue.severity}:${issue.claim}:${issue.reason}`}
+                        >
+                          {issue.claim}：{issue.reason}；建议{issue.suggestion}
+                        </li>
+                      ))}
+                      {aiReview.remaining_risks.map((risk) => (
+                        <li key={risk}>{risk}</li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </StudioCard>
+            )}
 
             <StudioCard className="grid gap-4 p-4 sm:p-6">
               <form
