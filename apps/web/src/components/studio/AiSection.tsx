@@ -11,12 +11,14 @@ import {
   StudioInput,
   StudioLabel,
   StudioSelect,
+  StudioTextArea,
 } from './primitives'
 import type {
   AiAssignment,
   AiConfig,
   AiProvider,
-  AiProviderType,
+  AiProviderAdapter,
+  AiRole,
   AiTaskKey,
 } from './types'
 
@@ -25,18 +27,6 @@ const taskGroups: Array<{
   description: string
   tasks: Array<[AiTaskKey, string]>
 }> = [
-  {
-    label: '一键写作流水线',
-    description: '提交来源后自动依次执行，无需逐个操作。',
-    tasks: [
-      ['material_analysis', '素材分析'],
-      ['topic_planning', '选题规划'],
-      ['writing', '完整写作'],
-      ['fact_check', '事实核验'],
-      ['review', '终审修订'],
-      ['seo', '发布信息'],
-    ],
-  },
   {
     label: '站点其他 AI 能力',
     description: 'Core 的摘要、翻译、评论与洞察也统一从这里选模型。',
@@ -52,37 +42,57 @@ const taskGroups: Array<{
   },
 ]
 
-const providerPresets: Array<{
-  label: string
-  type: AiProviderType
-  endpoint: string
-  model: string
+const roleDefinitions: Array<{
+  slot: AiRole['slot']
+  name: string
+  description: string
 }> = [
   {
-    label: 'OpenAI',
-    type: 'openai-compatible',
-    endpoint: 'https://api.openai.com/v1',
-    model: 'gpt-5.2',
+    slot: 'material-analyst',
+    name: '素材分析员',
+    description: '提取事实、观点、引用和不确定性',
   },
   {
-    label: 'DeepSeek',
-    type: 'openai-compatible',
-    endpoint: 'https://api.deepseek.com',
-    model: 'deepseek-chat',
+    slot: 'topic-planner',
+    name: '选题策划',
+    description: '确定受众、角度和文章结构',
   },
   {
-    label: 'OpenRouter',
-    type: 'openai-compatible',
-    endpoint: 'https://openrouter.ai/api/v1',
-    model: 'openai/gpt-5.2',
+    slot: 'writer',
+    name: '主笔',
+    description: '依据素材和计划完成 Markdown 初稿',
   },
   {
-    label: 'Anthropic',
-    type: 'anthropic',
-    endpoint: 'https://api.anthropic.com',
-    model: 'claude-sonnet-4-5',
+    slot: 'quick-rewriter',
+    name: '改写编辑',
+    description: '在不改变事实的前提下优化选中内容',
+  },
+  {
+    slot: 'fact-checker',
+    name: '事实核验员',
+    description: '识别无证据、夸大和矛盾表述',
+  },
+  {
+    slot: 'reviewer',
+    name: '终审编辑',
+    description: '修正结构、逻辑和表达并输出成稿',
+  },
+  {
+    slot: 'seo-editor',
+    name: 'SEO 编辑',
+    description: '生成准确自然的标题、摘要和标签',
   },
 ]
+
+const roleTask: Record<string, AiTaskKey> = {
+  'material-analyst': 'material_analysis',
+  'topic-planner': 'topic_planning',
+  writer: 'writing',
+  'quick-rewriter': 'quick_rewrite',
+  reviewer: 'review',
+  'fact-checker': 'fact_check',
+  'seo-editor': 'seo',
+}
 
 const cleanId = (value: string) =>
   value
@@ -102,6 +112,7 @@ const readAssignmentValue = (value: string): AiAssignment | undefined => {
 const prepareProvider = (provider: AiProvider) => ({
   id: provider.id,
   name: provider.name,
+  adapter: provider.adapter,
   type: provider.type,
   api_key: provider.api_key,
   endpoint: provider.endpoint || undefined,
@@ -128,6 +139,8 @@ export function AiSection({
   const [assignments, setAssignments] = useState<
     Partial<Record<AiTaskKey, AiAssignment>>
   >({})
+  const [roles, setRoles] = useState<AiRole[]>([])
+  const [adapters, setAdapters] = useState<AiProviderAdapter[]>([])
   const [models, setModels] = useState<
     Record<string, Array<{ id: string; name?: string }>>
   >({})
@@ -138,7 +151,18 @@ export function AiSection({
     setDefaultProviderId(config.default_provider_id || '')
     setDefaultModel(config.default_model || '')
     setAssignments(config.assignments || {})
+    setRoles(config.roles || [])
   }, [config])
+
+  useEffect(() => {
+    void studioRequest<{ adapters: AiProviderAdapter[] }>(
+      '/marlin/ai/config/adapters',
+    )
+      .then((result) => setAdapters(result.adapters))
+      .catch((error) =>
+        notify(error instanceof Error ? error.message : '读取接入器失败', true),
+      )
+  }, [notify])
 
   const modelChoices = useMemo(() => {
     const values: AiAssignment[] = []
@@ -162,23 +186,52 @@ export function AiSection({
     )
   }
 
+  const updateRole = (slot: string, patch: Partial<AiRole>) => {
+    setRoles((items) =>
+      items.map((role) => (role.slot === slot ? { ...role, ...patch } : role)),
+    )
+  }
+
   const save = async () => {
     setPending('save')
     try {
+      const roleAssignments = Object.fromEntries(
+        roles.map((role) => [
+          roleTask[role.slot],
+          { provider_id: role.provider_id, model: role.model },
+        ]),
+      )
       const next = await studioRequest<AiConfig>('/marlin/ai/config', {
         method: 'PUT',
         body: studioJson({
           providers: providers.map(prepareProvider),
           default_provider_id: defaultProviderId || undefined,
           default_model: defaultModel || undefined,
-          assignments,
+          assignments: { ...assignments, ...roleAssignments },
         }),
       })
       setProviders(next.providers)
       setAssignments(next.assignments)
       setDefaultProviderId(next.default_provider_id || '')
       setDefaultModel(next.default_model || '')
-      notify('AI 配置已统一应用到完整流水线和 Core')
+      const rolesToSave = roles.length > 0 ? roles : next.roles
+      for (const role of rolesToSave) {
+        await studioRequest('/marlin/ai/roles', {
+          method: 'POST',
+          body: studioJson({
+            slot: role.slot,
+            provider_id: role.provider_id,
+            model: role.model,
+            system_prompt: role.system_prompt,
+            temperature: role.temperature,
+            max_tokens: role.max_tokens,
+            daily_budget_cents: role.daily_budget_cents,
+            enabled: role.enabled,
+          }),
+        })
+      }
+      setRoles(rolesToSave)
+      notify('模型接入器与 AI 角色提示词已生效')
       await reload()
       return true
     } catch (error) {
@@ -231,27 +284,28 @@ export function AiSection({
     }
   }
 
-  const addProvider = (preset: (typeof providerPresets)[number]) => {
-    const base = cleanId(preset.label) || 'provider'
+  const addProvider = (adapter: AiProviderAdapter) => {
+    const base = cleanId(adapter.name) || 'provider'
     const used = new Set(providers.map(({ id }) => id))
     let id = base
     let index = 2
     while (used.has(id)) id = `${base}-${index++}`
     const provider: AiProvider = {
       id,
-      name: preset.label,
-      type: preset.type,
+      name: adapter.name,
+      adapter: adapter.id,
+      type: adapter.type,
       api_key: '',
-      endpoint: preset.endpoint,
-      append_v1: true,
-      default_model: preset.model,
+      endpoint: adapter.endpoint,
+      append_v1: adapter.append_v1,
+      default_model: adapter.default_model,
       enabled: true,
       credential_configured: false,
     }
     setProviders((items) => [...items, provider])
     if (!defaultProviderId) {
       setDefaultProviderId(id)
-      setDefaultModel(preset.model)
+      setDefaultModel(adapter.default_model)
     }
   }
 
@@ -264,8 +318,8 @@ export function AiSection({
           </p>
           <h2 className="text-2xl font-bold tracking-tight">AI 配置中心</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">
-            这里只需配置模型服务和默认模型。写作、核验、审校、SEO，以及 Core
-            的摘要和翻译都会直接继承；只有需要不同模型的任务才单独选择。
+            接入器统一处理不同服务的协议和地址；写作流水线由七个 AI
+            角色协作，每个角色都能选择模型并编写自己的系统提示词。
           </p>
         </div>
         <span
@@ -283,7 +337,9 @@ export function AiSection({
         <div>
           <h3 className="font-semibold">模型服务</h3>
           <p className="mt-1 text-xs leading-5 text-zinc-500">
-            选择常用服务可自动填好地址；密钥只保存在 Core，页面不会回显。
+            接入器由 Core
+            提供并统一用于连接测试、模型发现和实际生成。密钥只保存在
+            Core，页面不会回显。
           </p>
         </div>
         {providers.length === 0 ? (
@@ -344,18 +400,29 @@ export function AiSection({
                   <StudioLabel label="Provider ID" hint="保存后不要随意修改">
                     <StudioInput value={provider.id} disabled />
                   </StudioLabel>
-                  <StudioLabel label="协议">
+                  <StudioLabel label="接入器">
                     <StudioSelect
-                      value={provider.type}
-                      onChange={(event) =>
+                      value={provider.adapter || 'openai-compatible'}
+                      onChange={(event) => {
+                        const adapter = adapters.find(
+                          ({ id }) => id === event.target.value,
+                        )
+                        if (!adapter) return
                         updateProvider(provider.id, {
-                          type: event.target.value as AiProviderType,
+                          adapter: adapter.id,
+                          type: adapter.type,
+                          endpoint: adapter.endpoint || provider.endpoint || '',
+                          append_v1: adapter.append_v1,
+                          default_model:
+                            provider.default_model || adapter.default_model,
                         })
-                      }
+                      }}
                     >
-                      <option value="openai-compatible">OpenAI 兼容</option>
-                      <option value="anthropic">Anthropic</option>
-                      <option value="generic">通用协议</option>
+                      {adapters.map((adapter) => (
+                        <option value={adapter.id} key={adapter.id}>
+                          {adapter.name}
+                        </option>
+                      ))}
                     </StudioSelect>
                   </StudioLabel>
                 </div>
@@ -387,6 +454,10 @@ export function AiSection({
                   <StudioLabel label="接口地址">
                     <StudioInput
                       value={provider.endpoint || ''}
+                      disabled={
+                        adapters.find(({ id }) => id === provider.adapter)
+                          ?.custom_endpoint === false
+                      }
                       onChange={(event) =>
                         updateProvider(provider.id, {
                           endpoint: event.target.value,
@@ -441,14 +512,14 @@ export function AiSection({
           </div>
         )}
         <div className="flex flex-wrap gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-          {providerPresets.map((preset) => (
+          {adapters.map((adapter) => (
             <StudioButton
-              key={preset.label}
+              key={adapter.id}
               type="button"
               tone="secondary"
-              onClick={() => addProvider(preset)}
+              onClick={() => addProvider(adapter)}
             >
-              + {preset.label}
+              + {adapter.name}
             </StudioButton>
           ))}
         </div>
@@ -491,6 +562,147 @@ export function AiSection({
               />
             </StudioLabel>
           </div>
+        </StudioCard>
+      )}
+
+      {providers.length > 0 && (
+        <StudioCard className="grid gap-6">
+          <div>
+            <h3 className="font-semibold">AI 写作角色</h3>
+            <p className="mt-1 text-xs leading-5 text-zinc-500">
+              流水线会按角色依次工作。提示词会作为该角色的系统指令真实发送给所选模型。
+            </p>
+          </div>
+          {roles.length === 0 ? (
+            <StudioEmpty>
+              先保存模型服务，Core 会建立七个默认角色；随后可立即修改提示词。
+            </StudioEmpty>
+          ) : (
+            <div className="grid gap-4">
+              {roleDefinitions.map((definition) => {
+                const role = roles.find(({ slot }) => slot === definition.slot)
+                if (!role) return null
+                const selected = assignmentValue({
+                  provider_id: role.provider_id,
+                  model: role.model,
+                })
+                return (
+                  <div
+                    className="grid gap-4 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700"
+                    key={role.slot}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h4 className="font-semibold">{definition.name}</h4>
+                        <p className="mt-1 text-xs text-zinc-500">
+                          {definition.description}
+                        </p>
+                      </div>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={role.enabled}
+                          onChange={(event) =>
+                            updateRole(role.slot, {
+                              enabled: event.target.checked,
+                            })
+                          }
+                        />
+                        启用角色
+                      </label>
+                    </div>
+                    <StudioLabel label="角色模型">
+                      <StudioSelect
+                        value={selected}
+                        onChange={(event) => {
+                          const assignment = readAssignmentValue(
+                            event.target.value,
+                          )
+                          if (!assignment) return
+                          updateRole(role.slot, assignment)
+                        }}
+                      >
+                        {modelChoices.map((assignment) => (
+                          <option
+                            value={assignmentValue(assignment)}
+                            key={assignmentValue(assignment)}
+                          >
+                            {
+                              providers.find(
+                                ({ id }) => id === assignment.provider_id,
+                              )?.name
+                            }{' '}
+                            · {assignment.model}
+                          </option>
+                        ))}
+                      </StudioSelect>
+                    </StudioLabel>
+                    <StudioLabel
+                      label="系统提示词"
+                      hint={`${role.system_prompt.length}/20000`}
+                    >
+                      <StudioTextArea
+                        className="min-h-36 leading-6"
+                        maxLength={20_000}
+                        value={role.system_prompt}
+                        onChange={(event) =>
+                          updateRole(role.slot, {
+                            system_prompt: event.target.value,
+                          })
+                        }
+                      />
+                    </StudioLabel>
+                    <details className="rounded-xl bg-zinc-50 p-3 text-sm dark:bg-zinc-950">
+                      <summary className="cursor-pointer font-medium">
+                        高级参数
+                      </summary>
+                      <div className="mt-3 grid gap-3 md:grid-cols-3">
+                        <StudioLabel label="温度" hint="0–2">
+                          <StudioInput
+                            type="number"
+                            min={0}
+                            max={2}
+                            step={0.05}
+                            value={role.temperature}
+                            onChange={(event) =>
+                              updateRole(role.slot, {
+                                temperature: Number(event.target.value),
+                              })
+                            }
+                          />
+                        </StudioLabel>
+                        <StudioLabel label="最大输出 Token">
+                          <StudioInput
+                            type="number"
+                            min={128}
+                            max={128_000}
+                            value={role.max_tokens}
+                            onChange={(event) =>
+                              updateRole(role.slot, {
+                                max_tokens: Number(event.target.value),
+                              })
+                            }
+                          />
+                        </StudioLabel>
+                        <StudioLabel label="每日预算（美分）" hint="0 为不限">
+                          <StudioInput
+                            type="number"
+                            min={0}
+                            value={role.daily_budget_cents}
+                            onChange={(event) =>
+                              updateRole(role.slot, {
+                                daily_budget_cents: Number(event.target.value),
+                              })
+                            }
+                          />
+                        </StudioLabel>
+                      </div>
+                    </details>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </StudioCard>
       )}
 

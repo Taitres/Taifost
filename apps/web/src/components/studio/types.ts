@@ -164,10 +164,28 @@ export interface AiRole {
 }
 
 export type AiProviderType = 'openai-compatible' | 'anthropic' | 'generic'
+export type AiProviderAdapterId =
+  | 'openai'
+  | 'deepseek'
+  | 'openrouter'
+  | 'anthropic'
+  | 'openai-compatible'
+
+export interface AiProviderAdapter {
+  id: AiProviderAdapterId
+  name: string
+  description: string
+  type: AiProviderType
+  endpoint?: string
+  append_v1: boolean
+  default_model: string
+  custom_endpoint: boolean
+}
 
 export interface AiProvider {
   id: string
   name: string
+  adapter?: AiProviderAdapterId
   type: AiProviderType
   api_key: string
   endpoint?: string
