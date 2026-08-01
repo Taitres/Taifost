@@ -27,6 +27,7 @@ export function MaterialsSection({
   notify: (message: string, error?: boolean) => void
 }) {
   const [pending, setPending] = useState(false)
+  const [deletingId, setDeletingId] = useState('')
   const [form, setForm] = useState({
     title: '',
     kind: 'markdown',
@@ -100,6 +101,30 @@ export function MaterialsSection({
       notify(error instanceof Error ? error.message : '导入失败', true)
     } finally {
       setPending(false)
+    }
+  }
+
+  const deleteMaterial = async (material: Material) => {
+    const confirmed = window.confirm(
+      `确定删除素材“${material.title}”吗？它会从引用它的项目中解除关联，但不会删除已经归档到 OpenList 的图片。此操作不可撤销。`,
+    )
+    if (!confirmed) return
+    setDeletingId(material.id)
+    try {
+      const result = await studioRequest<{ detached: number }>(
+        `/marlin/materials/${material.id}?detach=true`,
+        { method: 'DELETE' },
+      )
+      await reload()
+      notify(
+        result.detached > 0
+          ? `素材已删除，并从 ${result.detached} 个项目解除关联`
+          : '素材已删除',
+      )
+    } catch (error) {
+      notify(error instanceof Error ? error.message : '删除失败', true)
+    } finally {
+      setDeletingId('')
     }
   }
 
@@ -283,6 +308,14 @@ export function MaterialsSection({
                         </StudioButton>
                       </>
                     )}
+                    <StudioButton
+                      tone="danger"
+                      className="min-h-8 px-2 py-1 text-xs"
+                      disabled={Boolean(deletingId)}
+                      onClick={() => void deleteMaterial(material)}
+                    >
+                      {deletingId === material.id ? '删除中…' : '删除素材'}
+                    </StudioButton>
                   </div>
                 </div>
               </details>

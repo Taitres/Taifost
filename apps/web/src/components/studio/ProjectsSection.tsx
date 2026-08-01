@@ -114,7 +114,9 @@ export function ProjectsSection({
   )
   const [savedSnapshot, setSavedSnapshot] = useState('')
   const [loading, setLoading] = useState(false)
-  const [action, setAction] = useState<'save' | 'publish' | 'schedule' | ''>('')
+  const [action, setAction] = useState<
+    'save' | 'publish' | 'schedule' | 'delete' | ''
+  >('')
   const [editorMode, setEditorMode] = useState<'edit' | 'split' | 'preview'>(
     'split',
   )
@@ -260,6 +262,36 @@ export function ProjectsSection({
     }
   }
 
+  const deleteProject = async () => {
+    if (!project) return
+    if (project.core_post_id && project.status !== 'withdrawn') {
+      notify('请先撤回已发布文章，再删除本地草稿与历史', true)
+      return
+    }
+    const confirmed = window.confirm(
+      `确定删除“${project.title}”吗？草稿、修订、审阅和发布记录都会删除；共享素材和 OpenList 图片不会被删除。此操作不可撤销。`,
+    )
+    if (!confirmed) return
+    setAction('delete')
+    try {
+      await studioRequest(`/marlin/projects/${project.id}`, {
+        method: 'DELETE',
+      })
+      window.localStorage.removeItem(draftKey(project.id))
+      const nextId = projects.find(({ id }) => id !== project.id)?.id || ''
+      setProject(null)
+      setSelectedId(nextId)
+      setForm(emptyDraft(categories[0]?.id))
+      setSavedSnapshot('')
+      await reload()
+      notify('项目草稿及关联历史已删除')
+    } catch (error) {
+      notify(error instanceof Error ? error.message : '删除失败', true)
+    } finally {
+      setAction('')
+    }
+  }
+
   return (
     <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)]">
       <aside className="grid h-fit gap-3 xl:sticky xl:top-6">
@@ -351,6 +383,13 @@ export function ProjectsSection({
                     {action === 'publish' ? '正在发布…' : '发布文章'}
                   </StudioButton>
                 )}
+                <StudioButton
+                  tone="danger"
+                  disabled={Boolean(action)}
+                  onClick={() => void deleteProject()}
+                >
+                  {action === 'delete' ? '正在删除…' : '删除项目'}
+                </StudioButton>
               </div>
             </header>
 
