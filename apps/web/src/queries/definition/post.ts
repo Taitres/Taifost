@@ -7,6 +7,7 @@ import type {
 import { apiClient } from '~/lib/request'
 
 import { defineQuery } from '../helper'
+import { withStableArticleCount } from './article-payload'
 
 export type PostWithTranslation = ModelWithLiked<
   ModelWithTranslation<PostModel>
@@ -30,13 +31,7 @@ export const post = {
           prefer: 'lexical',
         })
 
-        return {
-          ...data,
-          count: {
-            read: data.count?.read ?? 0,
-            like: data.count?.like ?? 0,
-          },
-        } as PostWithTranslation
+        return withStableArticleCount(data) as PostWithTranslation
       },
     }),
 }

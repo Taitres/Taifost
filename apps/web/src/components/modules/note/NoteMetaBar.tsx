@@ -59,7 +59,7 @@ export const NoteMetaMood = () => {
 }
 
 export const NoteMetaReadCount = () => {
-  const read = useCurrentNoteDataSelector((data) => data?.data.count?.read)
+  const read = useCurrentNoteDataSelector((data) => data?.data?.count?.read)
   if (!read) return null
   return (
     <>
@@ -76,7 +76,7 @@ export const NoteMetaReadCount = () => {
 }
 
 export const NoteMetaLikeCount = () => {
-  const like = useCurrentNoteDataSelector((data) => data?.data.count?.like)
+  const like = useCurrentNoteDataSelector((data) => data?.data?.count?.like)
   if (!like) return null
   return (
     <>

@@ -1,11 +1,7 @@
-import type {
-  NoteModel,
-  NoteWrappedWithLikedAndTranslationPayload,
-} from '@mx-space/api-client'
-
 import { apiClient } from '~/lib/request'
 
 import { defineQuery } from '../helper'
+import { normalizeNotePayload } from './article-payload'
 
 const LATEST_KEY = 'latest'
 export const note = {
@@ -21,7 +17,7 @@ export const note = {
         ]
 
         if (idOrPath === LATEST_KEY) {
-          return ensureNoteWrappedEnvelope(await apiClient.note.getLatest())
+          return normalizeNotePayload(await apiClient.note.getLatest())
         }
 
         // The v3 backend exposes note detail at two URLs:
@@ -49,7 +45,7 @@ export const note = {
               prefer: 'lexical',
             })
 
-        return ensureNoteWrappedEnvelope(raw)
+        return normalizeNotePayload(raw)
       },
     }),
 }
@@ -68,51 +64,5 @@ function parseNotePath(
     month: Number.parseInt(m, 10),
     day: Number.parseInt(d, 10),
     slug: decodeURIComponent(slug),
-  }
-}
-
-/**
- * Ensure the v3 note detail payload is returned in the
- * `NoteWrappedWithLikedAndTranslationPayload = { data: NoteModel, meta }`
- * shape the rest of the app expects.
- *
- * The v3 backend returns `{ data: NoteModel, meta }` and our `getDataFromResponse`
- * unwraps `res.data` to a bare NoteModel. Most callers (CurrentNoteDataProvider,
- * note.byId consumers, NotePreview, the [id] page) access the model via
- * `result.data?.xxx`, so we re-introduce the envelope here instead of touching
- * every consumer. We never strip the existing `meta` because the v2 API also
- * wrapped the model this way.
- */
-function ensureNoteWrappedEnvelope(raw: any): any {
-  if (!raw) return { data: raw as unknown as NoteModel }
-  const withCount = (note: Record<string, any>) => ({
-    ...note,
-    count: {
-      read: note.count?.read ?? 0,
-      like: note.count?.like ?? 0,
-    },
-  })
-  // Already wrapped — `data` is a NoteModel (has `id` / `nid`).
-  if (
-    typeof raw === 'object' &&
-    raw.data &&
-    typeof raw.data === 'object' &&
-    (raw.data as any).id !== undefined
-  ) {
-    return {
-      ...raw,
-      data: withCount(raw.data),
-    } as NoteWrappedWithLikedAndTranslationPayload
-  }
-  // Bare NoteModel (returned by `apiClient.note.getNoteBy*`) — wrap it as the
-  // `data` field of the envelope and lift top-level siblings (`next`, `prev`,
-  // and any future adjacents) so legacy consumers like
-  // `useCurrentNoteDataSelector((d) => d?.prev?.nid)` keep working without
-  // touching every call site.
-  const { next, prev, ...noteModel } = (raw ?? {}) as Record<string, any>
-  return {
-    data: withCount(noteModel),
-    next: next ?? null,
-    prev: prev ?? null,
   }
 }

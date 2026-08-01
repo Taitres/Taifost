@@ -83,9 +83,9 @@ const LikeButton = () => {
   const [update] = useForceUpdate()
 
   const likeCount = useCurrentNoteDataSelector(
-    (data) => data?.data.count?.like ?? 0,
+    (data) => data?.data?.count?.like ?? 0,
   )
-  const id = useCurrentNoteDataSelector((data) => data?.data.id)
+  const id = useCurrentNoteDataSelector((data) => data?.data?.id)
   const nid = useCurrentNoteNid()
 
   if (!id) return null
