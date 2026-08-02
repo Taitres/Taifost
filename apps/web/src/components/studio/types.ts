@@ -204,6 +204,7 @@ export interface AiAssignment {
 }
 
 export type AiTaskKey =
+  | 'material_grouping'
   | 'material_analysis'
   | 'topic_planning'
   | 'writing'

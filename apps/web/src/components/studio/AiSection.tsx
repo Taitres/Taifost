@@ -48,6 +48,11 @@ const roleDefinitions: Array<{
   description: string
 }> = [
   {
+    slot: 'material-recognizer',
+    name: '素材识别员',
+    description: '判断哪些冻结素材适合围绕同一主题合写',
+  },
+  {
     slot: 'material-analyst',
     name: '素材分析员',
     description: '提取事实、观点、引用和不确定性',
@@ -85,6 +90,7 @@ const roleDefinitions: Array<{
 ]
 
 const roleTask: Record<string, AiTaskKey> = {
+  'material-recognizer': 'material_grouping',
   'material-analyst': 'material_analysis',
   'topic-planner': 'topic_planning',
   writer: 'writing',

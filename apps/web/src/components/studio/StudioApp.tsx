@@ -17,7 +17,6 @@ import { MediaSection } from './MediaSection'
 import { NativeConsoleSection } from './NativeConsoleSection'
 import { OpsSection } from './OpsSection'
 import { StudioButton } from './primitives'
-import { ProjectsSection } from './ProjectsSection'
 import { SettingsSection } from './SettingsSection'
 import type { StudioData, StudioLoadFailure } from './studio-data'
 import { emptyStudioData, loadStudioSnapshot } from './studio-data'
@@ -36,7 +35,6 @@ export function StudioApp() {
   const [previewToken, setPreviewToken] = useState<string>()
   const [section, setSection] = useState<Section>('overview')
   const [nativeHash, setNativeHash] = useState('')
-  const [focusedProjectId, setFocusedProjectId] = useState('')
   const [data, setData] = useState<StudioData>(emptyStudioData)
   const dataRef = useRef<StudioData>(emptyStudioData)
   const [loadFailures, setLoadFailures] = useState<StudioLoadFailure[]>([])
@@ -132,6 +130,16 @@ export function StudioApp() {
     ) {
       window.history.pushState(null, '', nextUrl)
     }
+  }, [])
+
+  const openCore = useCallback((hash = '#/dashboard') => {
+    setSection('core')
+    setNativeHash(hash)
+    window.history.pushState(
+      null,
+      '',
+      `${window.location.pathname}${window.location.search}${hash}`,
+    )
   }, [])
 
   const logout = useCallback(async () => {
@@ -310,10 +318,7 @@ export function StudioApp() {
               projects={data.projects}
               reload={load}
               notify={notify}
-              onCreated={(projectId) => {
-                setFocusedProjectId(projectId)
-                navigate('projects')
-              }}
+              onOpenDraft={openCore}
               onConfigureAi={() => navigate('ai')}
             />
           )}
@@ -330,18 +335,6 @@ export function StudioApp() {
               themes={data.themes}
               sources={data.sources}
               candidates={data.candidates}
-              reload={load}
-              notify={notify}
-            />
-          )}
-          {section === 'projects' && (
-            <ProjectsSection
-              projects={data.projects}
-              materials={data.materials}
-              categories={data.categories}
-              timezone={data.siteTimezone}
-              focusedProjectId={focusedProjectId}
-              onStartNew={() => navigate('overview')}
               reload={load}
               notify={notify}
             />

@@ -3,7 +3,6 @@ export const studioSections = [
   'materials',
   'media',
   'hotspots',
-  'projects',
   'ai',
   'ops',
   'settings',
@@ -37,12 +36,6 @@ export const studioNavigationGroups: StudioNavigationGroup[] = [
         label: '开始创作',
         description: '粘贴即可成稿',
         icon: '⌁',
-      },
-      {
-        id: 'projects',
-        label: '文章草稿',
-        description: '编辑与发布',
-        icon: '✎',
       },
       {
         id: 'hotspots',
@@ -92,8 +85,8 @@ export const studioNavigationGroups: StudioNavigationGroup[] = [
       { id: 'ops', label: '运行保障', description: '服务健康', icon: '◉' },
       {
         id: 'core',
-        label: '基础管理',
-        description: 'MX Space 原生能力',
+        label: '内容与站点',
+        description: 'MX Space 唯一编辑后台',
         icon: '▦',
       },
     ],

@@ -9,6 +9,7 @@ import {
   StatusPill,
   StudioButton,
   StudioCard,
+  StudioInput,
   StudioTextArea,
 } from './primitives'
 import type { AiConfig, Project } from './types'
@@ -16,6 +17,20 @@ import type { AiConfig, Project } from './types'
 interface ComposeResult {
   project: Project
   revision: { id: string; title: string }
+  core_draft: { id: string; editor_hash: string }
+  recognition: {
+    material_ids: string[]
+    title: string
+    reason: string
+    confidence: number
+  }
+  review_request: {
+    request: { id: string }
+    email_delivery: {
+      status: 'not_requested' | 'sent' | 'failed'
+      error?: string
+    }
+  }
   deduplicated: boolean
   ignored_images?: number
   generation_mode: 'ai'
@@ -38,6 +53,7 @@ const progressSteps = [
   '读取来源',
   '归档图片',
   '分析素材',
+  '识别可合写素材',
   '规划文章',
   '撰写成稿',
   '核验事实',
@@ -64,20 +80,25 @@ export function ComposeSection({
   projects,
   reload,
   notify,
-  onCreated,
+  onOpenDraft,
   onConfigureAi,
 }: {
   aiConfig: AiConfig
   projects: Project[]
   reload: () => Promise<void>
   notify: (message: string, error?: boolean) => void
-  onCreated: (projectId: string) => void
+  onOpenDraft: (editorHash: string) => void
   onConfigureAi: () => void
 }) {
   const [source, setSource] = useState('')
   const [instruction, setInstruction] = useState('')
+  const [reviewerEmail, setReviewerEmail] = useState('')
   const [pending, setPending] = useState(false)
   const [step, setStep] = useState(0)
+
+  useEffect(() => {
+    setReviewerEmail(window.localStorage.getItem('marlin-review-email') || '')
+  }, [])
 
   useEffect(() => {
     if (!pending) {
@@ -103,21 +124,28 @@ export function ComposeSection({
         body: studioJson({
           source: source.trim(),
           instruction: instruction.trim(),
+          reviewer_email: reviewerEmail.trim() || undefined,
         }),
       })
       await reload()
       const riskCount =
         result.review.issues.length + result.review.remaining_risks.length
+      const delivery = result.review_request.email_delivery
       notify(
-        riskCount > 0
-          ? `完整成稿已生成，AI 标记了 ${riskCount} 项供你审查`
-          : result.ignored_images
-            ? `完整成稿已生成；${result.ignored_images} 张无法归档的图片已自动跳过`
-            : `六阶段流水线已完成，现在只需检查和发布`,
+        delivery.status === 'failed'
+          ? `MX Space 草稿已创建，但审核邮件发送失败：${delivery.error || '请检查邮件配置'}`
+          : riskCount > 0
+            ? `完整成稿已生成，AI 标记了 ${riskCount} 项供你审查`
+            : result.ignored_images
+              ? `完整成稿已生成；${result.ignored_images} 张无法归档的图片已自动跳过`
+              : `AI 流水线已完成，草稿已进入 MX Space 等待审核`,
       )
       setSource('')
       setInstruction('')
-      onCreated(result.project.id)
+      if (reviewerEmail.trim()) {
+        window.localStorage.setItem('marlin-review-email', reviewerEmail.trim())
+      }
+      onOpenDraft(result.core_draft.editor_hash)
     } catch (error) {
       notify(error instanceof Error ? error.message : '生成初稿失败', true)
     } finally {
@@ -145,7 +173,7 @@ export function ComposeSection({
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-zinc-500 sm:text-base">
             粘贴公开链接或
-            Markdown。系统会自动抓取、归档图片、理解内容、生成标题、
+            Markdown。系统会自动抓取、归档图片、识别可合写素材，再生成标题、
             摘要、分类、标签和完整初稿。
           </p>
           {!aiConfig.ready && (
@@ -176,7 +204,7 @@ export function ComposeSection({
 
             {pending ? (
               <div className="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-950">
-                <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-9">
                   {progressSteps.map((label, index) => (
                     <div key={label} className="min-w-0">
                       <div
@@ -203,7 +231,7 @@ export function ComposeSection({
                 </p>
               </div>
             ) : (
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+              <div className="grid gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-800 sm:grid-cols-[minmax(0,1fr)_minmax(14rem,20rem)_auto] sm:items-center">
                 <div className="flex items-center gap-2">
                   <label className="cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800">
                     上传 Markdown
@@ -237,11 +265,18 @@ export function ComposeSection({
                     </div>
                   </details>
                 </div>
+                <StudioInput
+                  type="email"
+                  aria-label="审核邮箱"
+                  value={reviewerEmail}
+                  onChange={(event) => setReviewerEmail(event.target.value)}
+                  placeholder="审核邮箱（自动记住）"
+                />
                 <StudioButton
                   className="min-w-36 rounded-2xl"
                   disabled={!source.trim() || !aiConfig.ready}
                 >
-                  一键生成完整文章 →
+                  保存素材并自动成稿 →
                 </StudioButton>
               </div>
             )}
@@ -267,7 +302,13 @@ export function ComposeSection({
               <button
                 key={project.id}
                 className="text-left"
-                onClick={() => onCreated(project.id)}
+                onClick={() =>
+                  onOpenDraft(
+                    project.core_post_id
+                      ? `#/posts/edit?id=${project.core_post_id}`
+                      : '#/posts',
+                  )
+                }
               >
                 <StudioCard className="h-full transition hover:-translate-y-0.5 hover:border-zinc-400 hover:shadow-md dark:hover:border-zinc-600">
                   <div className="flex items-start justify-between gap-3">
@@ -277,7 +318,7 @@ export function ComposeSection({
                     <StatusPill value={project.status} />
                   </div>
                   <p className="mt-4 text-xs text-zinc-400">
-                    {statusLabel(project.status)} · 点击继续编辑
+                    {statusLabel(project.status)} · 在 MX Space 中编辑
                   </p>
                 </StudioCard>
               </button>
