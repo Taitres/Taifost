@@ -1,7 +1,7 @@
 'use client'
 
 import type { FormEvent } from 'react'
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { studioJson, studioRequest } from '~/lib/studio-api'
 
@@ -32,29 +32,48 @@ export function PublicReview({ reviewId }: { reviewId: string }) {
   const [error, setError] = useState('')
   const [pending, setPending] = useState(false)
   const [done, setDone] = useState('')
+  const [magicLink, setMagicLink] = useState(false)
+  const autoUnlockAttemptedRef = useRef(false)
   const idempotencyKeyRef = useRef(
     globalThis.crypto?.randomUUID?.() ??
       `review-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   )
 
-  const unlock = async (event: FormEvent) => {
+  const unlockWithPasscode = useCallback(
+    async (value: string) => {
+      setPending(true)
+      setError('')
+      try {
+        const result = await studioRequest<ReviewPreview>(
+          `/marlin/reviews/${reviewId}/preview`,
+          {
+            method: 'POST',
+            body: studioJson({ passcode: value }),
+          },
+        )
+        setPreview(result)
+      } catch (error) {
+        setError(error instanceof Error ? error.message : '无法打开审阅')
+      } finally {
+        setPending(false)
+      }
+    },
+    [reviewId],
+  )
+
+  useEffect(() => {
+    if (autoUnlockAttemptedRef.current) return
+    const value = new URLSearchParams(window.location.search).get('passcode')
+    if (!value || !/^\d{6}$/.test(value)) return
+    autoUnlockAttemptedRef.current = true
+    setMagicLink(true)
+    setPasscode(value)
+    void unlockWithPasscode(value)
+  }, [unlockWithPasscode])
+
+  const unlock = (event: FormEvent) => {
     event.preventDefault()
-    setPending(true)
-    setError('')
-    try {
-      const result = await studioRequest<ReviewPreview>(
-        `/marlin/reviews/${reviewId}/preview`,
-        {
-          method: 'POST',
-          body: studioJson({ passcode }),
-        },
-      )
-      setPreview(result)
-    } catch (error) {
-      setError(error instanceof Error ? error.message : '无法打开审阅')
-    } finally {
-      setPending(false)
-    }
+    void unlockWithPasscode(passcode)
   }
 
   const decide = async (decision: 'approve' | 'reject') => {
@@ -107,7 +126,9 @@ export function PublicReview({ reviewId }: { reviewId: string }) {
           </p>
           <h1 className="mt-3 text-3xl font-bold tracking-tight">打开审阅</h1>
           <p className="mt-2 text-sm leading-6 text-zinc-500">
-            输入所有者单独提供的六位口令。口令不会包含在链接中。
+            {magicLink
+              ? '正在验证一次性审核链接。'
+              : '输入所有者单独提供的六位口令。'}
           </p>
           <form className="mt-7 grid gap-4" onSubmit={unlock}>
             <StudioLabel label="六位口令">
